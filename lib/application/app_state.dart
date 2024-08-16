@@ -12,8 +12,10 @@ class AppState with EquatableMixin {
   final Perceptron perceptron;
   final List<double> errors;
   final List<double> results;
+  final List<double> testResults;
 
-  const AppState({required this.iteration,
+  const AppState({
+    required this.iteration,
     required this.isTraining,
     required this.mode,
     required this.modeValue,
@@ -24,22 +26,23 @@ class AppState with EquatableMixin {
     required this.perceptron,
     required this.errors,
     required this.results,
+    required this.testResults,
   });
 
-
-  factory AppState.initial(){
+  factory AppState.initial() {
     return AppState(
-        iteration: 0,
-        isTraining: false,
-        mode: null,
-        modeValue: null,
-        trainingData: [],
-        testData: [],
-        failureOrSuccessOption: null,
+      iteration: 0,
+      isTraining: false,
+      mode: null,
+      modeValue: null,
+      trainingData: [],
+      testData: [],
+      failureOrSuccessOption: null,
       trainingEnded: false,
-        perceptron: appPerceptron,
+      perceptron: appPerceptron,
       errors: [],
       results: [],
+      testResults: [],
     );
   }
 
@@ -55,8 +58,8 @@ class AppState with EquatableMixin {
     Perceptron? perceptron,
     List<double>? errors,
     List<double>? results,
+    List<double>? testResults,
   }) {
-
     return AppState(
         iteration: iteration ?? this.iteration,
         isTraining: isTraining ?? this.isTraining,
@@ -66,42 +69,65 @@ class AppState with EquatableMixin {
         testData: testData ?? this.testData,
         failureOrSuccessOption: failureOrSuccessOption,
         trainingEnded: trainingEnded ?? false,
-      perceptron: perceptron ?? this.perceptron,
+        perceptron: perceptron ?? this.perceptron,
         errors: errors ?? this.errors,
-        results: results ?? this.results
-    );
+        results: results ?? this.results,
+        testResults: testResults ?? this.testResults);
   }
 
   List<TrainingData> get getTrainData {
     final List<Image> pictures = [];
-    for(final tData in trainingData) {
+    for (final tData in trainingData) {
       final picture = decodeImage(tData["image"]);
-      if(picture != null) {
+      if (picture != null) {
         pictures.add(picture);
       }
     }
 
     final List<TrainingData> data = List.generate(trainingData.length, (i) {
-      // final image = trainingData[i]["image"] as Uint8List;
       final values = trainingData[i]["value"] as String;
 
       return TrainingData(
           List.generate(6000, (index) {
-            // final List<double> source = [];
-            // for(int i = 0; i < 6000; i++) {
-            //   source.add(pictures[index].getPixel(i%120, i~/120).average);
-            // }
-
-            return pictures[i].getPixel(index%120, index~/120).average;
+            return pictures[i].getPixel(index % 120, index ~/ 120).average;
           }),
-          List.generate(1, (index) { // TODO: заменить 1 на длину списка результатов
-              return double.parse(values);
+          List.generate(1, (index) {
+            return double.parse(values);
           }));
     });
     return data;
   }
 
+  List<List<double>> get getTestData {
+    final List<Image> pictures = [];
+    for (final tData in testData) {
+      final picture = decodeImage(tData["image"]);
+      if (picture != null) {
+        pictures.add(picture);
+      }
+    }
+
+    final List<List<double>> data = List.generate(testData.length, (i) {
+      return List.generate(6000, (index) {
+            return pictures[i].getPixel(index % 120, index ~/ 120).average;
+          });
+    });
+    return data;
+  }
 
   @override
-  List<Object?> get props => [iteration, isTraining, mode, modeValue, trainingData, testData, failureOrSuccessOption, trainingEnded, perceptron, errors, results];
+  List<Object?> get props => [
+        iteration,
+        isTraining,
+        mode,
+        modeValue,
+        trainingData,
+        testData,
+        failureOrSuccessOption,
+        trainingEnded,
+        perceptron,
+        errors,
+        results,
+        testResults
+      ];
 }

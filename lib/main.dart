@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:diplom/perceptron/perceptron.dart';
 import 'package:diplom/presentation/screens/initial_screen.dart';
@@ -17,7 +16,7 @@ void main() {
       const MyApp()));
 }
 
-final appPerceptron = Perceptron([6000, 1, 1], 1);
+final Perceptron appPerceptron = Perceptron([6000, 10, 1], 1);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

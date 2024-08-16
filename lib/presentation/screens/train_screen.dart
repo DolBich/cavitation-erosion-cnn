@@ -1,39 +1,26 @@
-import 'dart:async';
 
 import 'package:diplom/presentation/functions/start_training.dart';
 import 'package:diplom/presentation/widgets/train_unit.dart';
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../application/app_bloc.dart';
-import '../../perceptron/training_data.dart';
-import '../entities/config_modes.dart';
 import '../functions/file_picker.dart';
 import '../functions/reset.dart';
 import '../functions/show_success_dialog.dart';
 import '../functions/show_train_config_dialog.dart';
 import '../widgets/iterator_indicator.dart';
 
-// class TrainScreen extends StatefulWidget {
-//   const TrainScreen({super.key});
-//
-//   @override
-//   State<TrainScreen> createState() => _TrainScreenState();
-// }
-
 class TrainScreen extends StatelessWidget {
-  // bool isRunning = false;
-  // List<Map<String, dynamic>> data = [];
-  // Map<String, dynamic> start = {};
-  // final AppBloc bloc;
+
 
   const TrainScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AppBloc, AppState>(
-      // bloc: bloc,
+
       listenWhen: (p, c) => p.failureOrSuccessOption != c.failureOrSuccessOption && c.failureOrSuccessOption != null || c.trainingEnded,
       listener: (context, state) {
         if (state.trainingEnded) showSuccessDialog(context);
@@ -61,10 +48,6 @@ class TrainScreen extends StatelessWidget {
 
       builder: (context, state) {
         final bloc = context.read<AppBloc>();
-        // final Map<String, dynamic> start = {
-        //   "mode" : state.mode,
-        //   "value" : state.modeValue
-        // };
         final mode = state.mode;
         return Scaffold(
           appBar: AppBar(
@@ -126,19 +109,19 @@ class TrainScreen extends StatelessWidget {
                 bloc.add(const AppEvent.stopTraining());
 
               } else {
+
                 final start = await showTrainConfigDialog(context);
-                // await Future.delayed(Duration(seconds: 1));
 
-                  // Navigator.
                   if (start.isNotEmpty && state.trainingData.isNotEmpty) {
-                    bloc.add(const AppEvent.startTraining());
-                    bloc.add(AppEvent.setTrainingConfig(start));
 
-                    startTraining(
-                        mode: start["mode"],
-                        endCondition: start["value"],
-                        bloc: bloc
-                    );
+                      bloc.add(AppEvent.startTraining(start));
+
+                      startTraining(
+                          mode: start["mode"],
+                          endCondition: start["value"],
+                          bloc: bloc
+                      );
+
                   }
 
               }

@@ -4,19 +4,21 @@ part of 'app_bloc.dart';
 sealed class AppEvent {
   const AppEvent();
 
-  const factory AppEvent.startTraining() = _StartTraining;
+  const factory AppEvent.startTraining(Map<String, dynamic> config) = _StartTraining;
 
   const factory AppEvent.stopTraining() = _StopTraining;
 
   const factory AppEvent.pickTrainData(Either<Failure, List<Map<String, dynamic>>>? data) = _PickTrainData;
 
-  const factory AppEvent.setTrainingConfig(Map<String, dynamic> config) = _SetTrainingConfig;
+  const factory AppEvent.pickTestData(Either<Failure, List<Map<String, dynamic>>>? data) = _PickTestData;
 
   const factory AppEvent.trainingEnded() = _TrainingEnded;
 
   const factory AppEvent.resetPerceptron() = _ResetPerceptron;
 
-  const factory AppEvent.train({required List<double> errors, required List<double> results, required int iteration}) = _Train;
+  const factory AppEvent.train({required List<double> errors, required List<double> results}) = _Train;
+
+  const factory AppEvent.testDone(List<double> results) = _TestDone;
 
 }
 
@@ -25,17 +27,18 @@ class _PickTrainData extends AppEvent {
   const _PickTrainData(this.data);
 }
 
+class _PickTestData extends AppEvent {
+  final Either<Failure, List<Map<String, dynamic>>>? data;
+  const _PickTestData(this.data);
+}
+
 class _StartTraining extends AppEvent {
-  const _StartTraining();
+  final Map<String, dynamic> config;
+  const _StartTraining(this.config);
 }
 
 class _StopTraining extends AppEvent {
   const _StopTraining();
-}
-
-class _SetTrainingConfig extends AppEvent {
-  final Map<String, dynamic> config;
-  const _SetTrainingConfig(this.config);
 }
 
 class _TrainingEnded extends AppEvent {
@@ -49,6 +52,12 @@ class _ResetPerceptron extends AppEvent {
 class _Train extends AppEvent {
   final List<double> errors;
   final List<double> results;
-  final int iteration;
-  const _Train({required this.errors, required this.results, required this.iteration});
+
+  const _Train({required this.errors, required this.results});
+}
+
+class _TestDone extends AppEvent {
+  final List<double> results;
+
+  const _TestDone(this.results);
 }
