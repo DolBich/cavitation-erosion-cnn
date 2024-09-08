@@ -1,4 +1,3 @@
-
 import 'package:diplom/presentation/functions/start_training.dart';
 import 'package:diplom/presentation/widgets/train_unit.dart';
 
@@ -13,39 +12,37 @@ import '../functions/show_train_config_dialog.dart';
 import '../widgets/iterator_indicator.dart';
 
 class TrainScreen extends StatelessWidget {
-
-
   const TrainScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AppBloc, AppState>(
-
-      listenWhen: (p, c) => p.failureOrSuccessOption != c.failureOrSuccessOption && c.failureOrSuccessOption != null || c.trainingEnded,
+      listenWhen: (p, c) =>
+          p.failureOrSuccessOption != c.failureOrSuccessOption &&
+              c.failureOrSuccessOption != null ||
+          c.trainingEnded,
       listener: (context, state) {
         if (state.trainingEnded) showSuccessDialog(context);
         state.failureOrSuccessOption?.fold(
-              (f) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("Ошибка: ${f.error}"),
-                  duration: const Duration(seconds: 5),
-                )
-            );
+          (f) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text("Ошибка: ${f.error}"),
+              duration: const Duration(seconds: 5),
+            ));
           },
-              (_) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(const SnackBar(content: Text("Успех")));
-              },
+          (_) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text("Успех")));
+          },
         );
       },
-      buildWhen: (p, c) => p.trainingData != c.trainingData ||
+      buildWhen: (p, c) =>
+          p.trainingData != c.trainingData ||
           p.errors != c.errors ||
           p.results != c.results ||
-      p.isTraining != c.isTraining ||
-      p.mode != c.mode ||
-      p.modeValue != c.modeValue,
-
+          p.isTraining != c.isTraining ||
+          p.mode != c.mode ||
+          p.modeValue != c.modeValue,
       builder: (context, state) {
         final bloc = context.read<AppBloc>();
         final mode = state.mode;
@@ -78,27 +75,32 @@ class TrainScreen extends StatelessWidget {
                   mode: mode,
                   value: state.modeValue,
                 ),
-
               SizedBox(
                 height: 500,
                 child: ListWheelScrollView(
                   itemExtent: 400,
                   children: state.trainingData.isNotEmpty
                       ? List.generate(state.trainingData.length, (i) {
-                    return TrainUnit(
-                        name: "${state.trainingData[i]["name"]}",
-                        image: Image.memory(state.trainingData[i]["image"]).image,
-                        expectedResult: "${state.trainingData[i]["value"]}",
-                        result: (state.results.elementAtOrNull(i) ?? "").toString(),
-                        error: (state.errors.elementAtOrNull(i) ?? "").toString());
-                  })
+                          return TrainUnit(
+                              name: "${state.trainingData[i]["name"]}",
+                              image:
+                                  Image.memory(state.trainingData[i]["image"])
+                                      .image,
+                              expectedResult:
+                                  "${state.trainingData[i]["value"]}",
+                              result: (state.results.elementAtOrNull(i) ?? "")
+                                  .toString(),
+                              error: (state.errors.elementAtOrNull(i) ?? "")
+                                  .toString());
+                        })
                       : [
-                    const Text(
-                      "Выберите файлы для тренировки",
-                      style: TextStyle(fontSize: 76, color: Colors.black12),
-                      textAlign: TextAlign.center,
-                    )
-                  ],
+                          const Text(
+                            "Выберите файлы для тренировки",
+                            style:
+                                TextStyle(fontSize: 76, color: Colors.black12),
+                            textAlign: TextAlign.center,
+                          )
+                        ],
                 ),
               ),
             ],
@@ -107,29 +109,25 @@ class TrainScreen extends StatelessWidget {
             onPressed: () async {
               if (state.isTraining) {
                 bloc.add(const AppEvent.stopTraining());
-
               } else {
-
                 final start = await showTrainConfigDialog(context);
 
-                  if (start.isNotEmpty && state.trainingData.isNotEmpty) {
+                if (start.isNotEmpty && state.trainingData.isNotEmpty) {
+                  bloc.add(AppEvent.startTraining(start));
 
-                      bloc.add(AppEvent.startTraining(start));
-
-                      startTraining(
-                          mode: start["mode"],
-                          endCondition: start["value"],
-                          bloc: bloc
-                      );
-
-                  }
-
+                  startTraining(
+                      mode: start["mode"],
+                      endCondition: start["value"],
+                      bloc: bloc);
+                }
               }
             },
             label: state.isTraining
                 ? const Text("Остановить тренировку")
                 : const Text("Начать тренировку"),
-            icon: state.isTraining ? const Icon(Icons.stop) : const Icon(Icons.play_arrow),
+            icon: state.isTraining
+                ? const Icon(Icons.stop)
+                : const Icon(Icons.play_arrow),
           ),
         );
       },
@@ -137,10 +135,9 @@ class TrainScreen extends StatelessWidget {
   }
 }
 
-
 extension ListX<E> on List<E> {
   E? elementAtOrNull(int i) {
-    try{
+    try {
       return this[i];
     } catch (_) {
       return null;

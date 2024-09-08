@@ -30,7 +30,8 @@ class TrainUnit extends StatelessWidget {
     titles.add("Получившийся результат");
     if(error != null) {
       results.add(error);
-      titles.add("Среднеквадратичная ошибка");
+      // titles.add("Среднеквадратичная ошибка");
+      titles.add("Ошибка");
     }
 
     return SizedBox(
