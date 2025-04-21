@@ -16,7 +16,7 @@ void main() {
       const MyApp()));
 }
 
-final Perceptron appPerceptron = Perceptron([6000, 6000, 1], 1);
+final Perceptron appPerceptron = Perceptron([6000, 3000, 1], 1);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

@@ -77,7 +77,7 @@ class TrainScreen extends StatelessWidget {
                 ),
               SizedBox(
                 height: 500,
-                child: ListWheelScrollView(
+                child: ListView(
                   itemExtent: 400,
                   children: state.trainingData.isNotEmpty
                       ? List.generate(state.trainingData.length, (i) {
@@ -118,7 +118,7 @@ class TrainScreen extends StatelessWidget {
                   startTraining(
                       mode: start["mode"],
                       endCondition: start["value"],
-                      bloc: bloc);
+                      bloc: bloc,);
                 }
               }
             },

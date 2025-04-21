@@ -35,7 +35,7 @@ Future<void> startTraining({
 
   Future(() async {
     while((endless || (mode == ConfigModes.iterator ? iteration <= value : error >= value)) && !trainStopped) {
-      await Future.delayed(const Duration(microseconds: 1));
+      await Future.delayed(const Duration(milliseconds: 3));
       final train =  perceptron.train(bloc.state.getTrainData);
 
       await Future((){

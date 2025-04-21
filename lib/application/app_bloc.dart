@@ -113,7 +113,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   Future _resetPerceptron(
       _ResetPerceptron event, Emitter<AppState> emit) async {
     emit(state.copyWith(
-      perceptron: Perceptron([6000, 10, 1], 1),
+      perceptron: Perceptron([6000, 3000, 1], 1),
     ));
   }
 

@@ -6,13 +6,11 @@ import 'package:diplom/perceptron/training_data.dart';
 import 'package:flutter/material.dart';
 import 'package:memoize/memoize.dart';
 
-
 import 'activation_functions/sigmoid.dart';
 import 'activation_functions/training_neuron_description.dart';
 import 'neuron.dart';
 
 class Perceptron {
-
   final int alpha;
 
   final _neurons = <Neuron>[];
@@ -21,6 +19,7 @@ class Perceptron {
   final _neuronByContest = <int, Neuron>{};
 
   late List<int> netConfiguration;
+
   // ActivationFunctionType _activationFunctionType;
   late Sigmoid _sigmoid;
 
@@ -28,11 +27,11 @@ class Perceptron {
     _init(layers);
   }
 
-  Perceptron.fromJson(String json, [this.alpha=1]) {
+  Perceptron.fromJson(String json, [this.alpha = 1]) {
     final Map<String, dynamic> loaded = jsonDecode(json);
     final layers = List<int>.from(loaded['netConfiguration']);
     final synapses = <Synapse>[];
-    for(final next in loaded['synapses'] as List) {
+    for (final next in loaded['synapses'] as List) {
       synapses.add(Synapse(
         synapseLayer: next['layer'],
         originNeuron: next['origin'],
@@ -48,45 +47,39 @@ class Perceptron {
     // _sigmoid = activationFunctionType;
     final function = Sigmoid();
     netConfiguration = layers;
-    for (var i=0; i<layers.length; i++) {
+    for (var i = 0; i < layers.length; i++) {
       assert(layers[i] > 0, 'Neuron number in each layer should be positive');
-      for (var j=0; j<layers[i]; j++) {
+      for (var j = 0; j < layers[i]; j++) {
         _neurons.add(Neuron(layer: i, number: j, sigmoid: function));
       }
-      if (i != layers.length-1) {
+      if (i != layers.length - 1) {
         _neurons.add(Neuron(layer: i, number: layers[i], sigmoid: function, isCorrector: true));
       }
     }
     if (initialSynapses == null) {
       int count = 0;
-      for (var i = 0; i < layers.length - 1; i++) {
-        for (var j = 0; j <= layers[i]; j++) {
-            debugPrint("synapse: $count");
-            count++;
-            _synapses.add(Synapse(
-                synapseLayer: i,
-                originNeuron: j,
-                destinationNeuron: i == 1 ? 0 : j,
-                weight: Random().nextDouble() - 0.5
-            ));
-        }
-      }
       // for (var i = 0; i < layers.length - 1; i++) {
       //   for (var j = 0; j <= layers[i]; j++) {
-      //     for (var k = 0; k < layers[i + 1]; k++) {
-      //       print("synapse: $count");
-      //       count++;
-      //       _synapses.add(Synapse(
-      //           synapseLayer: i,
-      //           originNeuron: j,
-      //           destinationNeuron: k,
-      //           weight: Random().nextDouble() - 0.5
-      //       ));
-      //     }
+      //     debugPrint("synapse: $count");
+      //     count++;
+      //     _synapses.add(Synapse(
+      //         synapseLayer: i,
+      //         originNeuron: j,
+      //         destinationNeuron: i == 1 ? 0 : j,
+      //         weight: Random().nextDouble() - 0.5));
       //   }
       // }
-    }
-    else {
+      for (var i = 0; i < layers.length - 1; i++) {
+        for (var j = 0; j <= layers[i]; j++) {
+          for (var k = 0; k < layers[i + 1]; k++) {
+            print("synapse: $count");
+            count++;
+            _synapses.add(
+                Synapse(synapseLayer: i, originNeuron: j, destinationNeuron: k, weight: Random().nextDouble() - 0.5));
+          }
+        }
+      }
+    } else {
       _synapses.addAll(initialSynapses);
     }
   }
@@ -94,18 +87,18 @@ class Perceptron {
   List<double> process(List<double> input) {
     final stopwatch = Stopwatch();
     stopwatch.start();
-    for(final n in _neurons) {
+    for (final n in _neurons) {
       n.initNeuron();
     }
-    for (var i=0; i<netConfiguration.first; i++) {
+    for (var i = 0; i < netConfiguration.first; i++) {
       _getNeuronCached(0, i).setExplicitValue(input[i]);
     }
-    for (var i=0; i<netConfiguration.length-1; i++) {
+    for (var i = 0; i < netConfiguration.length - 1; i++) {
       _processSynapseLayer(i);
     }
     final res = <double>[];
-    for (var i=0; i<netConfiguration.last; i++) {
-      res.add(_getNeuronCached(netConfiguration.length-1, i).value);
+    for (var i = 0; i < netConfiguration.last; i++) {
+      res.add(_getNeuronCached(netConfiguration.length - 1, i).value);
     }
     stopwatch.stop();
     return res;
@@ -116,57 +109,65 @@ class Perceptron {
     List<double> results = [];
     for (var next in trainData) {
       if (next.inputData.length != netConfiguration.first) {
-        debugPrint('Data for training should have the same number of inputs as the neurons number of entry layer of the network, skipping');
+        debugPrint(
+          'Data for training should have the same number of inputs '
+          'as the neurons number of entry layer of the network, skipping',
+        );
         continue;
       }
       if (next.outputData.length != netConfiguration.last) {
-        debugPrint('Data for training should have the same number of outputs as the neurons number of exit layer of the network, skipping');
+        debugPrint(
+          'Data for training should have the same number of outputs as the neurons number '
+          'of exit layer of the network, skipping',
+        );
         continue;
       }
       final res = process(next.inputData);
-      results.add(res.single); //TODO: Пока выход будет иметь только одно хначение, если сделаю так, чтобы обраюатывалось по блокам, то будет результат для каждого блока по порядку
+      results.add(res.single);
+      //TODO: Пока выход будет иметь только одно хначение, если сделаю так, чтобы обраюатывалось по блокам, то будет результат для каждого блока по порядку
       var errorValue = 0.0;
-      for (var i=0; i<netConfiguration.last; i++) {
+      for (var i = 0; i < netConfiguration.last; i++) {
+        errorValue += ((next.outputData[i] - res[i]).abs() / next.outputData[i]) * 100;
         // errorValue += (next.outputData[i] - res[i]) * (next.outputData[i] - res[i]);
-        errorValue += (next.outputData[i] - res[i]);
       }
 
-      errors.add(errorValue/netConfiguration.last);
+      errors.add(errorValue);
 
-      for (var i=0; i<netConfiguration.last; i++) {
-        final neuron = _getNeuronCached(netConfiguration.length-1, i);
-        final sigma =
-            (next.outputData[i] - neuron.value) * neuron.sigmoid.derivative(neuron.unsealedValue);
+      for (var i = 0; i < netConfiguration.last; i++) {
+        final neuron = _getNeuronCached(netConfiguration.length - 1, i);
+        final sigma = (next.outputData[i] - neuron.value) * neuron.sigmoid.derivative(neuron.unsealedValue);
         for (var prevNeuron in neuron.prevLayerValues) {
           final deltaWeight = alpha * sigma * prevNeuron.neuronValue;
           _getSynapseCached(1, prevNeuron.neuronNumber, i).addWeight(deltaWeight);
           _getNeuronCached(1, prevNeuron.neuronNumber).addErrorValue(sigma * prevNeuron.synapseWeight);
         }
       }
-      for (var i=0; i<netConfiguration[1]; i++) {
-        final neuron = _getNeuronCached(netConfiguration.length-2, i);
-        final sigma =
-            neuron.error * neuron.sigmoid.derivative(neuron.unsealedValue);
+      for (var i = 0; i < netConfiguration[1]; i++) {
+        final neuron = _getNeuronCached(netConfiguration.length - 2, i);
+        final sigma = neuron.error * neuron.sigmoid.derivative(neuron.unsealedValue);
         for (var prevNeuron in neuron.prevLayerValues) {
           final deltaWeight = alpha * sigma * prevNeuron.neuronValue;
           _getSynapseCached(0, prevNeuron.neuronNumber, i).addWeight(deltaWeight);
         }
       }
-      debugPrint("index: ${trainData.indexOf(next)}, error : ${errors[trainData.indexOf(next)]}, results : ${results[trainData.indexOf(next)]}");
+      debugPrint(
+        "index: ${trainData.indexOf(next)},"
+        " error : ${errors[trainData.indexOf(next)]}, "
+        "results : ${results[trainData.indexOf(next)]}",
+      );
     }
-    return {"errors" : errors, "results" : results};
+    return {"errors": errors, "results": results};
   }
 
   void _processSynapseLayer(int layer) {
     final sw = Stopwatch();
     sw.start();
-    for (var i=0; i<=netConfiguration[layer]; i++) {
+    for (var i = 0; i <= netConfiguration[layer]; i++) {
       final origin = _getNeuronCached(layer, i);
-        final destination = _getNeuronCached(layer+1, layer == 1 ? 0 : i);
-        final synapse = _getSynapseCached(layer, i, layer == 1 ? 0 : i);
-        destination.addWeightedValue(
-            TrainingNeuronDescription(neuronValue: origin.value, synapseWeight: synapse.weight, neuronNumber: i)
-        );
+      final destination = _getNeuronCached(layer + 1, layer == 1 ? 0 : i);
+      final synapse = _getSynapseCached(layer, i, layer == 1 ? 0 : i);
+      destination.addWeightedValue(
+          TrainingNeuronDescription(neuronValue: origin.value, synapseWeight: synapse.weight, neuronNumber: i));
     }
     // for (var i=0; i<=netConfiguration[layer]; i++) {
     //   final origin = _getNeuronCached(layer, i);
@@ -183,40 +184,58 @@ class Perceptron {
     _neurons.where((n) => n.layer == layer + 1).forEach((f) => f.sealValue());
   }
 
-  final _getNeuron = memo3((List<Neuron> neurons, int layer, int number) => neurons.singleWhere((n) => n.layer == layer && n.number == number));
-  final _getSynapse = memo4((List<Synapse> synapses, int layer, int origin, int destination) =>
-      synapses.singleWhere((s) => s.synapseLayer == layer && s.originNeuron == origin && s.destinationNeuron == destination));
+  final _getNeuron = memo3((List<Neuron> neurons, int layer, int number) {
+    try {
+      return neurons.singleWhere((n) => n.layer == layer && n.number == number);
+    } catch (e) {
+      print('Error trown: $e');
+      return neurons.singleWhere((n) => n.layer == layer && n.number == number);
+    }
+  });
+  final _getSynapse = memo4((List<Synapse> synapses, int layer, int origin, int destination) {
+    try {
+      return synapses.singleWhere(
+        (s) => s.synapseLayer == layer && s.originNeuron == origin && s.destinationNeuron == destination,
+      );
+    } catch (e) {
+      print('Error trown: $e');
+      return synapses.singleWhere(
+            (s) => s.synapseLayer == layer && s.originNeuron == origin && s.destinationNeuron == destination,
+      );
+    }
+  });
 
-  Neuron _getNeuronCached(int layer, int number) { // Сортировка нейронов по слоям и по местам в слое
-    final index = layer*6000+number;
+  Neuron _getNeuronCached(int layer, int number) {
+    // Сортировка нейронов по слоям и по местам в слое
+    final index = layer * 6000 + number;
 
     final res = _neuronByContest[index];
     if (res != null) {
       return res;
     }
-    final data = _getNeuron(_neurons, layer,number);
+    final data = _getNeuron(_neurons, layer, number);
     _neuronByContest[index] = data;
     return data;
   }
 
   Synapse _getSynapseCached(int layer, int origin, int destination) {
-    final index = layer*6000+origin*6000+destination;
+    final index = layer * 6000 + origin * 6000 + destination;
     final res = _synapseByContest[index];
     if (res != null) {
       return res;
     }
-    try{
+    try {
       final data = _getSynapse(_synapses, layer, origin, destination);
       _synapseByContest[index] = data;
       return data;
-    } catch(_){
-      final synapses = _synapses.where((s) => s.synapseLayer == layer && s.originNeuron == origin && s.destinationNeuron == destination);
+    } catch (_) {
+      final synapses = _synapses
+          .where((s) => s.synapseLayer == layer && s.originNeuron == origin && s.destinationNeuron == destination);
       debugPrint(synapses.toString());
       final data = _getSynapse(_synapses, layer, origin, destination);
       _synapseByContest[index] = data;
       return data;
     }
-
   }
 
   String toJson() {
