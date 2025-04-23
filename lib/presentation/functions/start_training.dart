@@ -1,52 +1,63 @@
-import 'package:collection/collection.dart';
-import 'package:diplom/presentation/entities/config_modes.dart';
+import 'dart:math';
 
-import '../../application/app_bloc.dart';
+import 'package:diplom/application/app_bloc.dart';
+import 'package:diplom/cnn/training.dart';
+import 'package:diplom/domain/training.dart';
+import 'package:diplom/presentation/entities/failure.dart';
+import 'package:image/image.dart';
 
-Future<void> startTraining({
-  required ConfigModes mode,
-  required String? endCondition,
-  required AppBloc bloc,
-})  async {
+void startTraining(AppBloc bloc, TrainingConfig config) async {
+  final state = bloc.state;
+  final samples = state.trainingData;
+  bloc.add(AppEvent.trainStarted(config));
 
-  bool endless = mode == ConfigModes.endless;
-  late final dynamic value;
+  bool isTraining = true;
 
-  if (mode == ConfigModes.error) {
-    value = double.parse(endCondition ?? '0');
-  } else {
-    value = int.parse(endCondition ?? '0');
+  final model = state.cnn;
+
+  bloc.stream.listen((state) {
+    if (!state.isTraining) {
+      isTraining = false;
+    }
+  });
+
+  for (int epoch = 0; epoch < (config.value ?? double.infinity) && isTraining; epoch++) {
+    double totalLoss = 0;
+
+    for (var sample in samples) {
+      // 1. Загрузка и препроцессинг изображения
+      Image? image = decodeImage(sample.image);
+      if (image == null) {
+        bloc.add(AppEvent.stopTraining(
+          withFailure: Failure('Image of ${sample.name} wasn\'t found'),
+        ));
+        return;
+      }
+
+      // 2. Прямой проход
+      double prediction = model.forward(image);
+
+      // 3. Расчет ошибки
+      double error = prediction - sample.trueCoefficient;
+      totalLoss += pow(error, 2);
+
+      // 4. Обновление UI
+      bloc.add(AppEvent.updateSample(
+        id: sample.id,
+        predictedCoefficient: prediction,
+        error: error,
+      ));
+
+      // 5. Обратное распространение
+      var gradients = calculateGradients(model, error);
+      updateWeights(model, gradients, 0.0001);
+
+      await Future.delayed(const Duration(milliseconds: 10)); // Для обновления UI
+    }
+
+    bloc.add(const AppEvent.epochDone());
+    print('Epoch ${epoch + 1}, Loss: ${totalLoss / samples.length}');
   }
 
-  int iteration = 0;
-  double error = 0;
-  bool trainStopped = false;
-  final perceptron = bloc.state.perceptron;
-  bloc.stream.listen((state) {
-    if (state.isTraining == false) {
-      trainStopped = true;
-    }
-    iteration = state.iteration;
-    if(state.errors.isNotEmpty){
-      error = state.errors.max;
-    }
-  });
-
-
-  Future(() async {
-    while((endless || (mode == ConfigModes.iterator ? iteration <= value : error >= value)) && !trainStopped) {
-      await Future.delayed(const Duration(milliseconds: 3));
-      final train =  perceptron.train(bloc.state.getTrainData);
-
-      await Future((){
-        bloc.add(AppEvent.train(errors: train["errors"] ?? [], results: train["results"] ?? []));
-      });
-    }
-    return;
-  }).then((_){
-    bloc.add(const AppEvent.trainingEnded());
-  });
-
-  return;
-
+  bloc.add(const AppEvent.trainingEnded());
 }

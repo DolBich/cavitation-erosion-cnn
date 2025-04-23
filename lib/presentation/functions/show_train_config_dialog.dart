@@ -1,11 +1,15 @@
+import 'package:diplom/domain/training.dart';
 import 'package:diplom/presentation/entities/config_modes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-Future<Map<String, dynamic>> showTrainConfigDialog(BuildContext context)  async {
-  return await showDialog<Map<String, dynamic>>(context: context, builder: (context) {
-    return const TrainConfigDialog();
-  }) ?? {};
+Future<TrainingConfig?> showTrainConfigDialog(BuildContext context) async {
+  return showDialog<TrainingConfig?>(
+    context: context,
+    builder: (context) {
+      return const TrainConfigDialog();
+    },
+  );
 }
 
 class TrainConfigDialog extends StatefulWidget {
@@ -16,65 +20,98 @@ class TrainConfigDialog extends StatefulWidget {
 }
 
 class _TrainConfigDialogState extends State<TrainConfigDialog> {
-
   static List<ConfigModes> conditionsModes = ConfigModes.values;
-  List<Widget> conditions = List.generate(conditionsModes.length, (i){
+  List<Widget> conditions = List.generate(conditionsModes.length, (i) {
     return Padding(
       padding: const EdgeInsets.all(6.0),
-      child: Text(conditionsModes[i].title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal),),
+      child: Text(
+        conditionsModes[i].title,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal),
+      ),
     );
   });
 
   List<bool> selectedConfigMode = [true, false, false];
 
+  ConfigModes get selectedMode => conditionsModes[selectedConfigMode.indexOf(true)];
+
+  final TextEditingController formController = TextEditingController();
+
+  Widget get _cancel {
+    return TextButton(
+      onPressed: () {
+        Navigator.pop(context);
+      },
+      child: const Text("Отмена"),
+    );
+  }
+
+  Widget get _start {
+    return TextButton(
+      onPressed: () {
+        if (selectedMode == ConfigModes.iterator && formController.text == "") {
+          Navigator.pop(context);
+          return;
+        }
+        final res = TrainingConfig(
+          mode: selectedMode,
+          value: formController.text == "" ? null : double.parse(formController.text),
+        );
+        Navigator.pop(context, res);
+        return;
+      },
+      child: const Text("Начать"),
+    );
+  }
+
+  Widget get _modChanger {
+    return ToggleButtons(
+      onPressed: (int index) {
+        setState(() {
+          for (int i = 0; i < selectedConfigMode.length; i++) {
+            selectedConfigMode[i] = i == index;
+          }
+        });
+      },
+      borderRadius: const BorderRadius.all(Radius.circular(8)),
+      constraints: const BoxConstraints(
+        minHeight: 40.0,
+        minWidth: 80.0,
+      ),
+      isSelected: selectedConfigMode,
+      children: conditions,
+    );
+  }
+
+  Widget get _description {
+    return const Text(
+      "Выберите условие, при котором тренировка завершится",
+      style: TextStyle(fontSize: 20, color: Colors.black26),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final TextEditingController formController = TextEditingController();
-
     return AlertDialog(
       title: const Center(child: Text("Настройки тренировки")),
       actions: [
-        TextButton(onPressed: (){Navigator.pop(context, <String, dynamic>{});}, child: const Text("Отмена")),
-        TextButton(onPressed: (){
-          if (conditionsModes[selectedConfigMode.indexOf(true)] == ConfigModes.iterator && formController.text == "") {
-            Navigator.of(context).pop(<String, dynamic>{});
-            return;
-          }
-          final res = {
-            "mode" : conditionsModes[selectedConfigMode.indexOf(true)],
-            "value" : formController.text == "" ? null : formController.text,
-          };
-          Navigator.of(context).pop(res);
-          return;
-          }, child: const Text("Начать")),
+        _cancel,
+        _start,
       ],
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ToggleButtons(
-              onPressed: (int index) {
-                setState(() {
-                  for (int i = 0; i < selectedConfigMode.length; i++) {
-                    selectedConfigMode[i] = i == index;
-                  }
-                });
-              },
-              borderRadius: const BorderRadius.all(Radius.circular(8)),
-              constraints: const BoxConstraints(
-                minHeight: 40.0,
-                minWidth: 80.0,
-              ),
-              isSelected: selectedConfigMode,
-              children: conditions,
+            child: _modChanger,
+          ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _DialogContent(selectedMode, formController),
             ),
           ),
-          Center(child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: _DialogContent(conditionsModes[selectedConfigMode.indexOf(true)], formController),
-          )),
-          const Text("Выберите условие, при котором тренировка завершится", style: TextStyle(fontSize: 20, color: Colors.black26),)
+          _description,
         ],
       ),
     );
@@ -84,23 +121,20 @@ class _TrainConfigDialogState extends State<TrainConfigDialog> {
 class _DialogContent extends StatelessWidget {
   final ConfigModes mode;
   final TextEditingController controller;
+
   const _DialogContent(this.mode, this.controller);
 
   @override
   Widget build(BuildContext context) {
     late RegExp regExpFormat;
 
-    if(mode != ConfigModes.endless) {
+    if (mode != ConfigModes.endless) {
       regExpFormat = RegExp(mode.regExpFormat);
       return TextFormField(
         controller: controller,
-        decoration: InputDecoration(
-            labelText: mode.label,
-            hintText: mode.hint,
-            border: const OutlineInputBorder()
-        ),
+        decoration: InputDecoration(labelText: mode.label, hintText: mode.hint, border: const OutlineInputBorder()),
         inputFormatters: [
-          TextInputFormatter.withFunction((oldValue, newValue){
+          TextInputFormatter.withFunction((oldValue, newValue) {
             final oldValueValid = _isValid(oldValue.text, regExpFormat);
             final newValueValid = _isValid(newValue.text, regExpFormat);
             if (oldValueValid && !newValueValid) {
@@ -112,9 +146,12 @@ class _DialogContent extends StatelessWidget {
       );
     }
 
-    return Text(mode.hint, style: const TextStyle(fontSize: 24),);
-
+    return Text(
+      mode.hint,
+      style: const TextStyle(fontSize: 24),
+    );
   }
+
   bool _isValid(String value, RegExp regExp) {
     try {
       final matches = regExp.allMatches(value);
@@ -130,6 +167,4 @@ class _DialogContent extends StatelessWidget {
       return true;
     }
   }
-
 }
-

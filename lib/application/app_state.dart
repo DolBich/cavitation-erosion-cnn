@@ -3,131 +3,86 @@ part of 'app_bloc.dart';
 class AppState with EquatableMixin {
   final int iteration;
   final bool isTraining;
-  final ConfigModes? mode;
-  final String? modeValue;
-  final List<Map<String, dynamic>> trainingData;
-  final List<Map<String, dynamic>> testData;
+  final TrainingConfig? trainingConfig;
+  final List<TrainingSample> trainingData;
+  final List<TestingSample> testData;
   final Either<Failure, Unit>? failureOrSuccessOption;
   final bool trainingEnded;
-  final Perceptron perceptron;
   final List<double> errors;
   final List<double> results;
   final List<double> testResults;
+  final ErosionNet cnn;
 
   const AppState({
     required this.iteration,
     required this.isTraining,
-    required this.mode,
-    required this.modeValue,
+    required this.trainingConfig,
     required this.trainingData,
     required this.testData,
     required this.failureOrSuccessOption,
     required this.trainingEnded,
-    required this.perceptron,
     required this.errors,
     required this.results,
     required this.testResults,
+    required this.cnn,
   });
 
   factory AppState.initial() {
     return AppState(
       iteration: 0,
       isTraining: false,
-      mode: null,
-      modeValue: null,
+      trainingConfig: null,
       trainingData: [],
       testData: [],
       failureOrSuccessOption: null,
       trainingEnded: false,
-      perceptron: appPerceptron,
       errors: [],
       results: [],
       testResults: [],
+      cnn: ErosionNet(),
     );
   }
 
   AppState copyWith({
     int? iteration,
     bool? isTraining,
-    ConfigModes? mode,
-    String? modeValue,
-    List<Map<String, dynamic>>? trainingData,
-    List<Map<String, dynamic>>? testData,
+    TrainingConfig? trainingConfig,
+    List<TrainingSample>? trainingData,
+    List<TestingSample>? testData,
     Either<Failure, Unit>? failureOrSuccessOption,
     bool? trainingEnded,
-    Perceptron? perceptron,
     List<double>? errors,
     List<double>? results,
     List<double>? testResults,
+    ErosionNet? cnn,
   }) {
     return AppState(
-        iteration: iteration ?? this.iteration,
-        isTraining: isTraining ?? this.isTraining,
-        mode: mode ?? this.mode,
-        modeValue: modeValue ?? this.modeValue,
-        trainingData: trainingData ?? this.trainingData,
-        testData: testData ?? this.testData,
-        failureOrSuccessOption: failureOrSuccessOption,
-        trainingEnded: trainingEnded ?? false,
-        perceptron: perceptron ?? this.perceptron,
-        errors: errors ?? this.errors,
-        results: results ?? this.results,
-        testResults: testResults ?? this.testResults);
-  }
-
-  List<TrainingData> get getTrainData {
-    final List<Image> pictures = [];
-    for (final tData in trainingData) {
-      final picture = decodeImage(tData["image"]);
-      if (picture != null) {
-        pictures.add(picture);
-      }
-    }
-
-    final List<TrainingData> data = List.generate(trainingData.length, (i) {
-      final values = trainingData[i]["value"] as String;
-
-      return TrainingData(
-          List.generate(6000, (index) {
-            return pictures[i].getPixel(index % 120, index ~/ 120).average;
-          }),
-          List.generate(1, (index) {
-            return double.parse(values);
-          }));
-    });
-    return data;
-  }
-
-  List<List<double>> get getTestData {
-    final List<Image> pictures = [];
-    for (final tData in testData) {
-      final picture = decodeImage(tData["image"]);
-      if (picture != null) {
-        pictures.add(picture);
-      }
-    }
-
-    final List<List<double>> data = List.generate(testData.length, (i) {
-      return List.generate(6000, (index) {
-            return pictures[i].getPixel(index % 120, index ~/ 120).average;
-          });
-    });
-    return data;
+      iteration: iteration ?? this.iteration,
+      isTraining: isTraining ?? this.isTraining,
+      trainingConfig: trainingConfig ?? this.trainingConfig,
+      trainingData: trainingData ?? this.trainingData,
+      testData: testData ?? this.testData,
+      failureOrSuccessOption: failureOrSuccessOption,
+      trainingEnded: trainingEnded ?? false,
+      errors: errors ?? this.errors,
+      results: results ?? this.results,
+      testResults: testResults ?? this.testResults,
+      cnn: cnn ?? this.cnn,
+    );
   }
 
   @override
   List<Object?> get props => [
         iteration,
         isTraining,
-        mode,
-        modeValue,
+        trainingConfig,
         trainingData,
         testData,
         failureOrSuccessOption,
         trainingEnded,
-        perceptron,
         errors,
         results,
-        testResults
+        testResults,
+        cnn,
       ];
 }

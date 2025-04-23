@@ -1,82 +1,98 @@
+import 'package:diplom/application/app_bloc.dart';
+import 'package:diplom/domain/testing.dart';
+import 'package:diplom/presentation/widgets/train_unit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../application/app_bloc.dart';
-import '../functions/file_picker.dart';
-import '../widgets/train_unit.dart';
 
 class TestScreen extends StatelessWidget {
   const TestScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocConsumer<AppBloc, AppState>(
-      listenWhen: (p, c) => p.failureOrSuccessOption != c.failureOrSuccessOption && c.failureOrSuccessOption != null || c.trainingEnded,
-      listener: (context, state) {
-        state.failureOrSuccessOption?.fold(
-              (f) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("Ошибка: ${f.error}"),
-                  duration: const Duration(seconds: 5),
-                )
-            );
-          },
-              (_) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(const SnackBar(content: Text("Успех")));
-          },
+  void _listener(BuildContext context, AppState state) {
+    final sm = ScaffoldMessenger.of(context);
+    state.failureOrSuccessOption?.fold(
+      (f) {
+        sm.showSnackBar(SnackBar(
+          content: Text("Ошибка: ${f.error}"),
+          duration: const Duration(seconds: 5),
+        ));
+      },
+      (_) {
+        sm.showSnackBar(const SnackBar(content: Text("Успех")));
+      },
+    );
+  }
+
+  Widget _pickFiles(BuildContext context) {
+    return IconButton(
+      onPressed: () {
+        final bloc = context.read<AppBloc>();
+        bloc.add(const AppEvent.pickTestData());
+      },
+      tooltip: "Выбрать файлы для тестирования",
+      icon: const Icon(Icons.download_outlined),
+    );
+  }
+
+  Widget get _pickFilesText {
+    return const Text(
+      "Выберите файлы для тестирования",
+      style: TextStyle(fontSize: 76, color: Colors.black12),
+      textAlign: TextAlign.center,
+    );
+  }
+
+  List<Widget> _samples(List<TestingSample> data) {
+    return List.generate(data.length, (i) {
+      final sample = data[i];
+      return TrainUnit(
+          name: sample.name,
+          image: Image.memory(sample.image).image,
+          expectedResult: null,
+          result: sample.predictedCoefficient.toString(),
+          error: null,);
+    });
+  }
+
+  Widget _samplesList(BuildContext context) {
+    return BlocBuilder<AppBloc, AppState>(
+      buildWhen: (p, c) => p.testData != c.testData,
+      builder: (context, state) {
+        final data = state.testData;
+        return ListView(
+          itemExtent: 400,
+          children: data.isNotEmpty
+              ? _samples(data)
+              : [_pickFilesText],
         );
       },
-      builder: (context, state) {
-        final bloc = context.read<AppBloc>();
-        final data = state.testData;
-        return Scaffold(
-          appBar: AppBar(
-            title: const Center(child: Text("Экран тестирования")),
-            backgroundColor: Colors.black12,
-            actions: [
-              IconButton(
-                  onPressed: () async {
-                    final res = await pickTestFiles();
-                    bloc.add(AppEvent.pickTestData(res));
-                  },
-                  tooltip: "Выбрать файлы для тестирования",
-                  icon: const Icon(Icons.download_outlined)),
-            ],
-          ),
-          body: ListWheelScrollView(
-            itemExtent: 400,
-            children: data.isNotEmpty
-                ? List.generate(data.length, (i) {
-              return TrainUnit(
-                  name: "${data[i]["name"]}",
-                  image: Image.memory(data[i]["image"]).image,
-                  expectedResult: null,
-                  result: (state.testResults.elementAtOrNull(i) ?? "").toString(),
-                  error: null);
-            })
-                : [
-              const Text(
-                "Выберите файлы для тестирования",
-                style: TextStyle(fontSize: 76, color: Colors.black12),
-                textAlign: TextAlign.center,
-              )
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              final List<double> results = [];
-              for(final data in state.getTestData) {
-                results.add(state.perceptron.process(data).single);
-              }
-              bloc.add(AppEvent.testDone(results));
-            },
-            label: const Text("Тестирование"),
-            icon: const Icon(Icons.play_arrow),
-          ),
-        );
-      }
+    );
+  }
+
+  Widget _floatingActionButton(BuildContext context) {
+    // final bloc = context.read<AppBloc>();
+    return FloatingActionButton.extended(
+      onPressed: () {
+
+      },
+      label: const Text("Тестирование"),
+      icon: const Icon(Icons.play_arrow),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AppBloc, AppState>(
+      listenWhen: (p, c) => p.failureOrSuccessOption != c.failureOrSuccessOption && c.failureOrSuccessOption != null,
+      listener: (context, state) => _listener(context, state),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Center(child: Text("Экран тестирования")),
+          backgroundColor: Colors.black12,
+          actions: [_pickFiles(context)],
+        ),
+        body: _samplesList(context),
+        floatingActionButton: _floatingActionButton(context),
+      ),
     );
   }
 }

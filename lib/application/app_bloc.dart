@@ -1,119 +1,111 @@
-
-import 'package:collection/collection.dart';
 import 'package:dartz/dartz.dart';
-import 'package:diplom/presentation/entities/config_modes.dart';
+import 'package:diplom/cnn/erosion_net.dart';
+import 'package:diplom/domain/testing.dart';
+import 'package:diplom/domain/training.dart';
+import 'package:diplom/presentation/entities/failure.dart';
+import 'package:diplom/presentation/functions/file_picker.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../main.dart';
-import '../perceptron/perceptron.dart';
-import '../perceptron/training_data.dart';
-import '../presentation/entities/failure.dart';
-import 'package:image/image.dart';
-
-part 'app_state.dart';
+import 'package:uuid/v4.dart';
 
 part 'app_event.dart';
+
+part 'app_state.dart';
 
 class AppBloc extends Bloc<AppEvent, AppState> {
   AppBloc() : super(AppState.initial()) {
     on<_PickTrainData>(_pickTrainData);
     on<_PickTestData>(_pickTestData);
     on<_StopTraining>(_stopTraining);
-    on<_StartTraining>(_startTraining);
     on<_TrainingEnded>(_trainingEnded);
-    on<_ResetPerceptron>(_resetPerceptron);
+    on<_ResetCNN>(_resetCNN);
     on<_Train>(_train);
     on<_TestDone>(_testDone);
+    on<_TrainingStarted>(_trainStarted);
+    on<_UpdateSample>(_updateSample);
+    on<_EpochDone>(_epochDone);
+    add(const AppEvent.resetCNN());
   }
 
-  Future _stopTraining(_StopTraining event, Emitter<AppState> emit) async {
-    emit(state.copyWith(isTraining: false));
-  }
-
-  void _startTraining(_StartTraining event, Emitter<AppState> emit) {
+  Future _epochDone(_EpochDone event, Emitter<AppState> emit) async {
     emit(state.copyWith(
-        isTraining: true,
-        iteration: 0,
-        mode: event.config["mode"], modeValue: event.config["value"]
+      iteration: state.iteration + 1,
     ));
   }
 
+  Future _updateSample(_UpdateSample event, Emitter<AppState> emit) async {
+    final List<TrainingSample> samples = List.from(state.trainingData);
+    final index = samples.indexWhere((e) => e.id == event.id);
+    samples[index] = samples[index].copyWith(
+      predictedCoefficient: event.predictedCoefficient,
+      error: event.error,
+    );
+    emit(state.copyWith(
+      trainingData: samples,
+    ));
+  }
+
+  Future _stopTraining(_StopTraining event, Emitter<AppState> emit) async {
+    emit(
+      state.copyWith(isTraining: false),
+    );
+  }
+
+  void _trainStarted(_TrainingStarted event, Emitter<AppState> emit) {
+    emit(
+      state.copyWith(
+        iteration: 0,
+        isTraining: true,
+        trainingConfig: event.config,
+      ),
+    );
+  }
+
   Future _pickTrainData(_PickTrainData event, Emitter<AppState> emit) async {
-    final data = event.data;
+    final data = await pickTrainFiles();
     if (data == null) {
-      emit(state
-          .copyWith(failureOrSuccessOption: right(unit), trainingData: []));
       return;
     }
+
     data.fold((f) {
       emit(state.copyWith(
         failureOrSuccessOption: left(f),
       ));
     }, (s) {
-
       emit(state.copyWith(
-          failureOrSuccessOption: right(unit),
-          trainingData: s,
-          // perceptron: state.perceptron.netConfiguration !=
-          //         [
-          //           (s.first["image"] as Uint8List).length,
-          //           ((s.first["image"] as Uint8List).length + 1) / 2,
-          //           1
-          //         ]
-          //     ? Perceptron([
-          //         (s.first["image"] as Uint8List).length,
-          //         ((s.first["image"] as Uint8List).length + 1) ~/ 2,
-          //         1
-          //       ], 1)
-          //     : null //TODO: подставить сюда вместо единиц число значений для одной картинки (когда введу разделение на блоки)
-          ));
+        failureOrSuccessOption: right(unit),
+        trainingData: s,
+      ));
     });
   }
 
   Future _pickTestData(_PickTestData event, Emitter<AppState> emit) async {
-    final data = event.data;
+    final data = await pickTestFiles();
     if (data == null) {
-      emit(state
-          .copyWith(failureOrSuccessOption: right(unit), trainingData: []));
       return;
     }
+
     data.fold((f) {
       emit(state.copyWith(
         failureOrSuccessOption: left(f),
       ));
     }, (s) {
-
       emit(state.copyWith(
         failureOrSuccessOption: right(unit),
         testData: s,
-        // perceptron: state.perceptron.netConfiguration !=
-        //         [
-        //           (s.first["image"] as Uint8List).length,
-        //           ((s.first["image"] as Uint8List).length + 1) / 2,
-        //           1
-        //         ]
-        //     ? Perceptron([
-        //         (s.first["image"] as Uint8List).length,
-        //         ((s.first["image"] as Uint8List).length + 1) ~/ 2,
-        //         1
-        //       ], 1)
-        //     : null //TODO: подставить сюда вместо единиц число значений для одной картинки (когда введу разделение на блоки)
       ));
     });
   }
 
   Future _trainingEnded(_TrainingEnded event, Emitter<AppState> emit) async {
     emit(state.copyWith(
-      trainingEnded: true,
       isTraining: false,
     ));
   }
 
-  Future _resetPerceptron(
-      _ResetPerceptron event, Emitter<AppState> emit) async {
+  Future _resetCNN(_ResetCNN event, Emitter<AppState> emit) async {
     emit(state.copyWith(
-      perceptron: Perceptron([6000, 3000, 1], 1),
+      cnn: ErosionNet(),
     ));
   }
 

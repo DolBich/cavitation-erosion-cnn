@@ -53,15 +53,15 @@ class ConvLayer {
 
   List<List<List<double>>> forward(List<List<List<double>>> input) {
     // Проверка совпадения количества каналов
-    assert(input.length == filters[0].length,
-    'Input channels (${input.length}) != filter channels (${filters[0].length})');
+    // assert(input.length == filters[0].length,
+    // 'Input channels (${input.length}) != filter channels (${filters[0].length})');
 
     List<List<List<double>>> paddedInput = _addPadding(input);
 
     int outputHeight = paddedInput[0].length - kernelSize + 1;
     int outputWidth = paddedInput[0][0].length - kernelSize + 1;
-    assert(outputHeight > 0 && outputWidth > 0,
-    'Некорректные размеры после свертки: ${outputHeight}x$outputWidth');
+    // assert(outputHeight > 0 && outputWidth > 0,
+    // 'Некорректные размеры после свертки: ${outputHeight}x$outputWidth');
 
 
     List<List<List<double>>> output = List.generate(

@@ -24,13 +24,12 @@ class TrainUnit extends StatelessWidget {
     List<String> results = [];
     if(expectedResult != null) {
       results.add(expectedResult);
-      titles.add("Ожидаемый результат");
+      titles.add("Ожидаемый результат, %");
     }
     results.add(result);
-    titles.add("Получившийся результат");
+    titles.add("Получившийся результат, %");
     if(error != null) {
       results.add(error);
-      // titles.add("Среднеквадратичная ошибка");
       titles.add("Ошибка");
     }
 

@@ -1,7 +1,5 @@
-import 'package:diplom/application/app_bloc.dart';
 import 'package:diplom/presentation/widgets/option_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class InitialScreen extends StatelessWidget {
   const InitialScreen({super.key});

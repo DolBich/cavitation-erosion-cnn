@@ -1,10 +1,9 @@
 
+import 'package:diplom/cnn/conv_block.dart';
+import 'package:diplom/cnn/dense.dart';
 import 'package:diplom/cnn/preprocess.dart';
 import 'package:diplom/cnn/process.dart';
 import 'package:image/image.dart';
-
-import 'conv_block.dart';
-import 'dense.dart';
 
 class ErosionNet {
   late List<ConvBlock> convBlocks;
@@ -32,6 +31,7 @@ class ErosionNet {
     for (var layer in denseLayers) {
       vector = layer.forward(vector);
     }
-    return sigmoid(vector[0]); // Коэффициент 0-1
+    // Масштабирование выхода: 0-1 -> 0-100
+    return sigmoid(vector[0]) * 100; // Коэффициент 0-1
   }
 }

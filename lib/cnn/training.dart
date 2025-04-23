@@ -1,9 +1,8 @@
 import 'dart:math';
 
+import 'package:diplom/cnn/dense.dart';
+import 'package:diplom/cnn/erosion_net.dart';
 import 'package:image/image.dart';
-
-import 'dense.dart';
-import 'erosion_net.dart';
 
 void train(List<Image> images, List<double> labels) {
   var net = ErosionNet();
