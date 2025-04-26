@@ -45,7 +45,7 @@ void startTraining(AppBloc bloc, TrainingConfig config) async {
         totalLoss += pow(error, 2);
 
         // 4. Обновление UI
-        bloc.add(AppEvent.updateSample(
+        bloc.add(AppEvent.updateTrainingSample(
           id: sample.id,
           predictedCoefficient: prediction,
           error: error,
@@ -86,7 +86,7 @@ void startTraining(AppBloc bloc, TrainingConfig config) async {
         totalError += pow(error, 2);
 
         // 4. Обновление UI
-        bloc.add(AppEvent.updateSample(
+        bloc.add(AppEvent.updateTrainingSample(
           id: sample.id,
           predictedCoefficient: prediction,
           error: error,

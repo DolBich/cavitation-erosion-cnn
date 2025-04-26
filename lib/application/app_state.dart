@@ -7,10 +7,6 @@ class AppState with EquatableMixin {
   final List<TrainingSample> trainingData;
   final List<TestingSample> testData;
   final Either<Failure, Unit>? failureOrSuccessOption;
-  final bool trainingEnded;
-  final List<double> errors;
-  final List<double> results;
-  final List<double> testResults;
   final ErosionNet cnn;
   final double totalError;
 
@@ -21,15 +17,11 @@ class AppState with EquatableMixin {
     required this.trainingData,
     required this.testData,
     required this.failureOrSuccessOption,
-    required this.trainingEnded,
-    required this.errors,
-    required this.results,
-    required this.testResults,
     required this.cnn,
     required this.totalError,
   });
 
-  factory AppState.initial() {
+  factory AppState.initial(ErosionNet initialNet) {
     return AppState(
       iteration: 0,
       isTraining: false,
@@ -37,11 +29,7 @@ class AppState with EquatableMixin {
       trainingData: [],
       testData: [],
       failureOrSuccessOption: null,
-      trainingEnded: false,
-      errors: [],
-      results: [],
-      testResults: [],
-      cnn: ErosionNet(),
+      cnn: initialNet,
       totalError: double.maxFinite,
     );
   }
@@ -53,10 +41,6 @@ class AppState with EquatableMixin {
     List<TrainingSample>? trainingData,
     List<TestingSample>? testData,
     Either<Failure, Unit>? failureOrSuccessOption,
-    bool? trainingEnded,
-    List<double>? errors,
-    List<double>? results,
-    List<double>? testResults,
     ErosionNet? cnn,
     double? totalError,
   }) {
@@ -67,10 +51,6 @@ class AppState with EquatableMixin {
       trainingData: trainingData ?? this.trainingData,
       testData: testData ?? this.testData,
       failureOrSuccessOption: failureOrSuccessOption,
-      trainingEnded: trainingEnded ?? false,
-      errors: errors ?? this.errors,
-      results: results ?? this.results,
-      testResults: testResults ?? this.testResults,
       cnn: cnn ?? this.cnn,
       totalError: totalError ?? this.totalError,
     );
@@ -84,10 +64,6 @@ class AppState with EquatableMixin {
         trainingData,
         testData,
         failureOrSuccessOption,
-        trainingEnded,
-        errors,
-        results,
-        testResults,
         cnn,
         totalError,
       ];

@@ -13,17 +13,18 @@ sealed class AppEvent {
 
   const factory AppEvent.resetCNN({ErosionNet? net}) = _ResetCNN;
 
-  const factory AppEvent.train({required List<double> errors, required List<double> results}) = _Train;
-
-  const factory AppEvent.testDone(List<double> results) = _TestDone;
-
   const factory AppEvent.trainStarted(TrainingConfig config) = _TrainingStarted;
 
-  const factory AppEvent.updateSample({
+  const factory AppEvent.updateTrainingSample({
     required UuidV4 id,
     required double predictedCoefficient,
-    double? error,
-  }) = _UpdateSample;
+    required double error,
+  }) = _UpdateTrainingSample;
+
+  const factory AppEvent.updateTestingSample({
+    required UuidV4 id,
+    required double predictedCoefficient,
+  }) = _UpdateTestingSample;
 
   const factory AppEvent.epochDone() = _EpochDone;
 
@@ -49,12 +50,24 @@ class _EpochDone extends AppEvent {
   const _EpochDone();
 }
 
-class _UpdateSample extends AppEvent {
+
+class _UpdateTestingSample extends AppEvent {
+  final UuidV4 id;
+  final double predictedCoefficient;
+
+  const _UpdateTestingSample({
+    required this.id,
+    required this.predictedCoefficient,
+  });
+}
+
+
+class _UpdateTrainingSample extends AppEvent {
   final UuidV4 id;
   final double predictedCoefficient;
   final double? error;
 
-  const _UpdateSample({
+  const _UpdateTrainingSample({
     required this.id,
     required this.predictedCoefficient,
     this.error,
@@ -88,17 +101,4 @@ class _TrainingEnded extends AppEvent {
 class _ResetCNN extends AppEvent {
   final ErosionNet? net;
   const _ResetCNN({this.net});
-}
-
-class _Train extends AppEvent {
-  final List<double> errors;
-  final List<double> results;
-
-  const _Train({required this.errors, required this.results});
-}
-
-class _TestDone extends AppEvent {
-  final List<double> results;
-
-  const _TestDone(this.results);
 }

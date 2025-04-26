@@ -31,7 +31,10 @@ class TrainScreen extends StatelessWidget {
                 c.trainingData.firstWhereOrNull((e) => e.id == id)) &&
             c.trainingData.firstWhereOrNull((e) => e.id == id) != null,
         builder: (context, state) {
-          final sample = state.trainingData.firstWhere((e) => e.id == id);
+          final sample = state.trainingData.firstWhereOrNull((e) => e.id == id);
+          if(sample == null) {
+            return const SizedBox();
+          }
           return TrainUnit(
             name: sample.name,
             image: Image.memory(sample.image).image,
@@ -50,7 +53,7 @@ class TrainScreen extends StatelessWidget {
       builder: (context, state) {
         final bloc = context.read<AppBloc>();
         return FloatingActionButton.extended(
-          onPressed: !state.isTraining && state.trainingData.isNotEmpty
+          onPressed: state.isTraining || (!state.isTraining && state.trainingData.isNotEmpty)
               ? () async {
                   if (state.isTraining) {
                     bloc.add(const AppEvent.stopTraining());
@@ -108,7 +111,6 @@ class TrainScreen extends StatelessWidget {
   }
 
   void _listener(BuildContext context, AppState state) {
-    if (state.trainingEnded) showSuccessDialog(context);
     final sm = ScaffoldMessenger.of(context);
     state.failureOrSuccessOption?.fold(
       (f) {
@@ -123,13 +125,16 @@ class TrainScreen extends StatelessWidget {
     );
   }
 
+  void _successListener(BuildContext context, AppState state) {
+     showSuccessDialog(context);
+  }
+
   Widget _samplesList(BuildContext context) {
     return BlocBuilder<AppBloc, AppState>(
-      buildWhen: (p, c) => p.trainingData.length != c.trainingData.length,
+      buildWhen: (p, c) => p.trainingData != c.trainingData,
       builder: (context, state) {
         final data = state.trainingData;
-        return SizedBox(
-          height: 500,
+        return Expanded(
           child: ListView(
             itemExtent: 400,
             children: data.isNotEmpty ? _samples(data) : [_pickFilesText],
@@ -142,30 +147,32 @@ class TrainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AppBloc, AppState>(
-      listenWhen: (p, c) {
-        return (p.failureOrSuccessOption != c.failureOrSuccessOption && c.failureOrSuccessOption != null) ||
-            c.trainingEnded;
-      },
-      listener: (context, state) => _listener(context, state),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Center(child: Text("Тренировочный экран")),
-          backgroundColor: Colors.black12,
-          actions: [
-            _pickFilesButton(context),
-            _uploadNet(context),
-            _resetNet(context),
-          ],
-        ),
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const IteratorIndicator(),
-            _samplesList(context),
-          ],
-        ),
-        floatingActionButton: _floatingActionButton,
-      ),
+      listenWhen: (p, c) => (p.isTraining != c.isTraining && !c.isTraining),
+      listener: (context, state) => _successListener(context, state),
+     child: BlocListener<AppBloc, AppState>(
+       listenWhen: (p, c) => (p.failureOrSuccessOption != c.failureOrSuccessOption && c.failureOrSuccessOption != null),
+       listener: (context, state) => _listener(context, state),
+       child: Scaffold(
+         appBar: AppBar(
+           title: const Center(child: Text("Тренировочный экран")),
+           backgroundColor: Colors.black12,
+           actions: [
+             _pickFilesButton(context),
+             _uploadNet(context),
+             _resetNet(context),
+           ],
+         ),
+         body: Column(
+           mainAxisSize: MainAxisSize.min,
+           children: [
+             const IteratorIndicator(),
+             _samplesList(context),
+           ],
+         ),
+         floatingActionButton: _floatingActionButton,
+       ),
+     ),
     );
+
   }
 }

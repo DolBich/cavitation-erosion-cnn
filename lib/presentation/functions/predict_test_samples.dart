@@ -16,7 +16,7 @@ Future<void> predictTestSamples(AppBloc bloc, List<TestingSample> samples) async
 
     double coefficient = model.forward(image);
 
-    bloc.add(AppEvent.updateSample(
+    bloc.add(AppEvent.updateTestingSample(
       id: sample.id,
       predictedCoefficient: coefficient,
     ));
