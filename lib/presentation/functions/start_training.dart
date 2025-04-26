@@ -1,8 +1,10 @@
 import 'dart:math';
 
 import 'package:diplom/application/app_bloc.dart';
+import 'package:diplom/cnn/erosion_net.dart';
 import 'package:diplom/cnn/training.dart';
 import 'package:diplom/domain/training.dart';
+import 'package:diplom/presentation/entities/config_modes.dart';
 import 'package:diplom/presentation/entities/failure.dart';
 import 'package:image/image.dart';
 
@@ -21,45 +23,91 @@ void startTraining(AppBloc bloc, TrainingConfig config) async {
     }
   });
 
-  for (int epoch = 0; epoch < (config.value ?? double.infinity) && isTraining; epoch++) {
-    double totalLoss = 0;
+  if(config.mode != ConfigModes.error) {
+    for (int epoch = 0; epoch < (config.value ?? double.infinity) && isTraining; epoch++) {
+      double totalLoss = 0;
 
-    for (var sample in samples) {
-      // 1. Загрузка и препроцессинг изображения
-      Image? image = decodeImage(sample.image);
-      if (image == null) {
-        bloc.add(AppEvent.stopTraining(
-          withFailure: Failure('Image of ${sample.name} wasn\'t found'),
+      for (var sample in samples) {
+        // 1. Загрузка и препроцессинг изображения
+        Image? image = decodeImage(sample.image);
+        if (image == null) {
+          bloc.add(AppEvent.stopTraining(
+            withFailure: Failure('Image of ${sample.name} wasn\'t found'),
+          ));
+          return;
+        }
+
+        // 2. Прямой проход
+        double prediction = model.forward(image);
+
+        // 3. Расчет ошибки
+        double error = prediction - sample.trueCoefficient;
+        totalLoss += pow(error, 2);
+
+        // 4. Обновление UI
+        bloc.add(AppEvent.updateSample(
+          id: sample.id,
+          predictedCoefficient: prediction,
+          error: error,
         ));
-        return;
+
+        // 5. Обратное распространение
+        var gradients = calculateGradients(model, error);
+        updateWeights(model, gradients, 0.0001);
+
+        print('Epoch ${epoch + 1}: ${sample.name} = $prediction|${(error/sample.trueCoefficient) * 100}');
+        if(!isTraining) break;
+        await Future.delayed(const Duration(milliseconds: 100)); // Для обновления UI
       }
 
-      // 2. Прямой проход
-      double prediction = model.forward(image);
-
-      // 3. Расчет ошибки
-      double error = prediction - sample.trueCoefficient;
-      totalLoss += pow(error, 2);
-
-      // 4. Обновление UI
-      bloc.add(AppEvent.updateSample(
-        id: sample.id,
-        predictedCoefficient: prediction,
-        error: error,
-      ));
-
-      // 5. Обратное распространение
-      var gradients = calculateGradients(model, error);
-      updateWeights(model, gradients, 0.0001);
-
-      print('Epoch ${epoch + 1}: ${sample.name} = $prediction|${(error/sample.trueCoefficient) * 100}');
-      if(!isTraining) break;
-      await Future.delayed(const Duration(milliseconds: 100)); // Для обновления UI
+      bloc.add(const AppEvent.epochDone());
+      bloc.add(AppEvent.updateTotalError(totalLoss / samples.length));
+      print('Epoch ${epoch + 1}, Loss: ${totalLoss / samples.length}');
     }
+  } else {
+    double totalError = double.maxFinite;
+    for (int epoch = 0; (totalError / samples.length) > (config.value ?? double.infinity) && isTraining; epoch++) {
+      totalError = 0;
+      for (var sample in samples) {
+        // 1. Загрузка и препроцессинг изображения
+        Image? image = decodeImage(sample.image);
+        if (image == null) {
+          bloc.add(AppEvent.stopTraining(
+            withFailure: Failure('Image of ${sample.name} wasn\'t found'),
+          ));
+          return;
+        }
 
-    bloc.add(const AppEvent.epochDone());
-    print('Epoch ${epoch + 1}, Loss: ${totalLoss / samples.length}');
+        // 2. Прямой проход
+        double prediction = model.forward(image);
+
+        // 3. Расчет ошибки
+        double error = (prediction - sample.trueCoefficient).abs();
+        totalError += pow(error, 2);
+
+        // 4. Обновление UI
+        bloc.add(AppEvent.updateSample(
+          id: sample.id,
+          predictedCoefficient: prediction,
+          error: error,
+        ));
+
+        // 5. Обратное распространение
+        var gradients = calculateGradients(model, error);
+        updateWeights(model, gradients, 0.0001);
+
+        print('Epoch ${epoch + 1}: ${sample.name} = $prediction|${(error/sample.trueCoefficient) * 100}');
+        if(!isTraining) break;
+        await Future.delayed(const Duration(milliseconds: 100)); // Для обновления UI
+      }
+
+      bloc.add(const AppEvent.epochDone());
+      bloc.add(AppEvent.updateTotalError(totalError / samples.length));
+      print('Epoch ${epoch + 1}, Error: ${totalError / samples.length}');
+    }
   }
 
+
+  ErosionNet.saveToFile(model, ' model.json');
   bloc.add(const AppEvent.trainingEnded());
 }

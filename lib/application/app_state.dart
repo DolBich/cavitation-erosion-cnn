@@ -12,6 +12,7 @@ class AppState with EquatableMixin {
   final List<double> results;
   final List<double> testResults;
   final ErosionNet cnn;
+  final double totalError;
 
   const AppState({
     required this.iteration,
@@ -25,6 +26,7 @@ class AppState with EquatableMixin {
     required this.results,
     required this.testResults,
     required this.cnn,
+    required this.totalError,
   });
 
   factory AppState.initial() {
@@ -40,6 +42,7 @@ class AppState with EquatableMixin {
       results: [],
       testResults: [],
       cnn: ErosionNet(),
+      totalError: double.maxFinite,
     );
   }
 
@@ -55,6 +58,7 @@ class AppState with EquatableMixin {
     List<double>? results,
     List<double>? testResults,
     ErosionNet? cnn,
+    double? totalError,
   }) {
     return AppState(
       iteration: iteration ?? this.iteration,
@@ -68,6 +72,7 @@ class AppState with EquatableMixin {
       results: results ?? this.results,
       testResults: testResults ?? this.testResults,
       cnn: cnn ?? this.cnn,
+      totalError: totalError ?? this.totalError,
     );
   }
 
@@ -84,5 +89,6 @@ class AppState with EquatableMixin {
         results,
         testResults,
         cnn,
+        totalError,
       ];
 }

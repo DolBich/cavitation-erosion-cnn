@@ -12,9 +12,9 @@ class TrainUnit extends StatelessWidget {
 
   final String name;
   final ImageProvider image;
-  final String? expectedResult;
-  final String result;
-  final String? error;
+  final double? expectedResult;
+  final double result;
+  final double? error;
 
   @override
   Widget build(BuildContext context) {
@@ -23,14 +23,18 @@ class TrainUnit extends StatelessWidget {
     List<String> titles = [];
     List<String> results = [];
     if(expectedResult != null) {
-      results.add(expectedResult);
+      results.add(expectedResult.toString());
       titles.add("Ожидаемый результат, %");
     }
-    results.add(result);
+    results.add(result.toString());
     titles.add("Получившийся результат, %");
     if(error != null) {
-      results.add(error);
+      results.add(error.toString());
       titles.add("Ошибка");
+    }
+    if(error != null && expectedResult != null) {
+      results.add(((error / expectedResult)*100).toString());
+      titles.add("Относительная ошибка, %");
     }
 
     return SizedBox(

@@ -8,8 +8,8 @@ Future<void> predictTestSamples(AppBloc bloc, List<TestingSample> samples) async
   for (var sample in samples) {
     Image? image = decodeImage(sample.image);
     if (image == null) {
-      bloc.add(AppEvent.failureInTest(
-        withFailure: Failure('Image of ${sample.name} wasn\'t found'),
+      bloc.add(AppEvent.failure(
+        failure: Failure('Image of ${sample.name} wasn\'t found'),
       ));
       return;
     }

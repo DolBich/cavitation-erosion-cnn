@@ -3,40 +3,59 @@ import 'dart:math';
 import 'package:diplom/cnn/process.dart';
 
 class DenseLayer {
-  late List<List<double>> weights; // [inputSize, outputSize]
-  late List<double> biases;        // [outputSize]
-  int inputSize;
-  int outputSize;
-  late List<double> lastInput;
+  final List<List<double>> weights;
+  final List<double> biases;
+  List<double> lastInput = []; // Для обратного прохода (не сериализуется!)
 
-  DenseLayer(this.inputSize, this.outputSize) {
-    // Инициализация весов (метод He)
-    double stdDev = sqrt(2.0 / inputSize);
-    weights = List.generate(
-      inputSize,
-          (i) => List.generate(
-        outputSize,
-            (j) => GaussianRandom().nextGaussian() * stdDev,
+  DenseLayer({
+    required this.weights,
+    required this.biases,
+  });
+
+  // Фабричный метод для создания нового слоя
+  factory DenseLayer.create(int inputSize, int outputSize) {
+    final stdDev = sqrt(2.0 / inputSize);
+    return DenseLayer(
+      weights: List.generate(
+        inputSize,
+            (i) => List.generate(
+          outputSize,
+              (j) => GaussianRandom().nextGaussian() * stdDev,
+        ),
       ),
+      biases: List.filled(outputSize, 0.0),
     );
-    biases = List.filled(outputSize, 0.0);
   }
 
   List<double> forward(List<double> input) {
-    assert(input.length == inputSize,
-    'Неверный размер входа: ${input.length} != $inputSize');
+    lastInput = List.from(input); // Сохраняем вход для обратного прохода
+    List<double> output = List.filled(biases.length, 0.0);
 
-    lastInput = List.from(input);
-    List<double> output = List.filled(outputSize, 0.0);
-
-    for (int j = 0; j < outputSize; j++) {
-      double sum = biases[j];
-      for (int i = 0; i < inputSize; i++) {
-        sum += input[i] * weights[i][j];
+    for (int j = 0; j < biases.length; j++) {
+      output[j] = biases[j];
+      for (int i = 0; i < input.length; i++) {
+        output[j] += input[i] * weights[i][j];
       }
-      output[j] = sum;
     }
 
     return output;
+  }
+
+  // Сериализация
+  Map<String, dynamic> toJson() {
+    return {
+      'weights': weights,
+      'biases': biases,
+    };
+  }
+
+  // Десериализация
+  factory DenseLayer.fromJson(Map<String, dynamic> json) {
+    return DenseLayer(
+      weights: (json['weights'] as List)
+          .map((w) => (w as List).map((v) => (v as num).toDouble()).toList())
+          .toList(),
+      biases: (json['biases'] as List).map((v) => (v as num).toDouble()).toList(),
+    );
   }
 }

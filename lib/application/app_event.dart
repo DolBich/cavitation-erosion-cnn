@@ -11,7 +11,7 @@ sealed class AppEvent {
 
   const factory AppEvent.trainingEnded() = _TrainingEnded;
 
-  const factory AppEvent.resetCNN() = _ResetCNN;
+  const factory AppEvent.resetCNN({ErosionNet? net}) = _ResetCNN;
 
   const factory AppEvent.train({required List<double> errors, required List<double> results}) = _Train;
 
@@ -27,14 +27,22 @@ sealed class AppEvent {
 
   const factory AppEvent.epochDone() = _EpochDone;
 
-  const factory AppEvent.failureInTest({required Failure withFailure}) = _FailureInTest;
+  const factory AppEvent.failure({required Failure failure}) = _Failure;
+
+  const factory AppEvent.updateTotalError(double error) = _UpdateTotalError;
 
 }
 
-class _FailureInTest extends AppEvent {
-  final Failure withFailure;
+class _UpdateTotalError extends AppEvent {
+  final double error;
 
-  const _FailureInTest({required this.withFailure});
+  const _UpdateTotalError(this.error);
+}
+
+class _Failure extends AppEvent {
+  final Failure failure;
+
+  const _Failure({required this.failure});
 }
 
 class _EpochDone extends AppEvent {
@@ -78,7 +86,8 @@ class _TrainingEnded extends AppEvent {
 }
 
 class _ResetCNN extends AppEvent {
-  const _ResetCNN();
+  final ErosionNet? net;
+  const _ResetCNN({this.net});
 }
 
 class _Train extends AppEvent {

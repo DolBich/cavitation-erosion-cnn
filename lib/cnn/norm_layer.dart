@@ -1,17 +1,27 @@
 import 'dart:math';
 
 class BatchNormLayer {
-  late List<double> gamma;
-  late List<double> beta;
-  late List<double> movingMean;
-  late List<double> movingVariance;
-  double epsilon;
+  final List<double> gamma;
+  final List<double> beta;
+  final List<double> movingMean;
+  final List<double> movingVariance;
+  final double epsilon;
 
-  BatchNormLayer(int numChannels, {this.epsilon = 1e-5}) {
-    gamma = List.filled(numChannels, 1.0);
-    beta = List.filled(numChannels, 0.0);
-    movingMean = List.filled(numChannels, 0.0);
-    movingVariance = List.filled(numChannels, 1.0);
+  BatchNormLayer({
+    required this.gamma,
+    required this.beta,
+    required this.movingMean,
+    required this.movingVariance,
+    this.epsilon = 1e-5,
+  });
+
+  factory BatchNormLayer.create(int numChannels) {
+    return BatchNormLayer(
+      gamma: List.filled(numChannels, 1.0),
+      beta: List.filled(numChannels, 0.0),
+      movingMean: List.filled(numChannels, 0.0),
+      movingVariance: List.filled(numChannels, 1.0),
+    );
   }
 
   List<List<List<double>>> forward(List<List<List<double>>> x) {
@@ -31,5 +41,25 @@ class BatchNormLayer {
       normalized.add(channel);
     }
     return normalized;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'gamma': gamma,
+      'beta': beta,
+      'movingMean': movingMean,
+      'movingVariance': movingVariance,
+      'epsilon': epsilon,
+    };
+  }
+
+  factory BatchNormLayer.fromJson(Map<String, dynamic> json) {
+    return BatchNormLayer(
+      gamma: (json['gamma'] as List).map((v) => (v as num).toDouble()).toList(),
+      beta: (json['beta'] as List).map((v) => (v as num).toDouble()).toList(),
+      movingMean: (json['movingMean'] as List).map((v) => (v as num).toDouble()).toList(),
+      movingVariance: (json['movingVariance'] as List).map((v) => (v as num).toDouble()).toList(),
+      epsilon: json['epsilon'] ?? 1e-5,
+    );
   }
 }

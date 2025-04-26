@@ -5,13 +5,10 @@ import 'package:diplom/domain/training.dart';
 import 'package:diplom/presentation/entities/failure.dart';
 import 'package:diplom/presentation/functions/file_picker.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uuid/v1.dart';
 import 'package:uuid/v4.dart';
 
 part 'app_event.dart';
-
 part 'app_state.dart';
 
 class AppBloc extends Bloc<AppEvent, AppState> {
@@ -26,13 +23,20 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     on<_TrainingStarted>(_trainStarted);
     on<_UpdateSample>(_updateSample);
     on<_EpochDone>(_epochDone);
-    on<_FailureInTest>(_failureInTest);
+    on<_Failure>(_failureInTest);
+    on<_UpdateTotalError>(_updateTotalError);
     add(const AppEvent.resetCNN());
   }
 
-  Future _failureInTest(_FailureInTest event, Emitter<AppState> emit) async {
+  Future _updateTotalError(_UpdateTotalError event, Emitter<AppState> emit) async {
     emit(state.copyWith(
-      failureOrSuccessOption: left(event.withFailure),
+      totalError: event.error,
+    ));
+  }
+
+  Future _failureInTest(_Failure event, Emitter<AppState> emit) async {
+    emit(state.copyWith(
+      failureOrSuccessOption: left(event.failure),
     ));
   }
 
@@ -66,6 +70,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
         iteration: 0,
         isTraining: true,
         trainingConfig: event.config,
+        totalError: double.maxFinite
       ),
     );
   }
@@ -114,7 +119,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
 
   Future _resetCNN(_ResetCNN event, Emitter<AppState> emit) async {
     emit(state.copyWith(
-      cnn: ErosionNet(),
+      cnn: event.net ?? ErosionNet(),
     ));
   }
 

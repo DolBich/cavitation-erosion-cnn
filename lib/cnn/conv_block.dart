@@ -4,23 +4,28 @@ import 'package:diplom/cnn/norm_layer.dart';
 import 'package:diplom/cnn/process.dart';
 
 class ConvBlock {
-  late List<ConvLayer> convLayers;
-  late List<BatchNormLayer> batchNorms;
-  int inChannels;
-  int outChannels;
-  int kernelSize;
-  int padding;
-  int poolSize;
+  final List<ConvLayer> convLayers;
+  final List<BatchNormLayer> batchNorms;
+  final int poolSize;
 
-  ConvBlock(this.inChannels, this.outChannels, {this.kernelSize = 3, this.padding = 0, this.poolSize = 2}) {
-    convLayers = [
-      ConvLayer(inChannels, outChannels, kernelSize: kernelSize, padding: padding),
-      ConvLayer(outChannels, outChannels, kernelSize: kernelSize, padding: padding)
-    ];
-    batchNorms = [
-      BatchNormLayer(outChannels),
-      BatchNormLayer(outChannels),
-    ];
+  ConvBlock({
+    required this.convLayers,
+    required this.batchNorms,
+    required this.poolSize,
+  });
+
+  factory ConvBlock.create(int inChannels, int outChannels, {int kernelSize = 3, int padding = 0, int poolSize = 2}) {
+    return ConvBlock(
+      convLayers: [
+        ConvLayer.create(inChannels, outChannels, kernelSize: kernelSize, padding: padding),
+        ConvLayer.create(outChannels, outChannels, kernelSize: kernelSize, padding: padding),
+      ],
+      batchNorms: [
+        BatchNormLayer.create(outChannels),
+        BatchNormLayer.create(outChannels),
+      ],
+      poolSize: poolSize,
+    );
   }
 
   List<List<List<double>>> forward(List<List<List<double>>> input) {
@@ -32,52 +37,82 @@ class ConvBlock {
     }
     return maxPool(x, poolSize);
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'convLayers': convLayers.map((l) => l.toJson()).toList(),
+      'batchNorms': batchNorms.map((b) => b.toJson()).toList(),
+      'poolSize': poolSize,
+    };
+  }
+
+  factory ConvBlock.fromJson(Map<String, dynamic> json) {
+    return ConvBlock(
+      convLayers: (json['convLayers'] as List)
+          .map((l) => ConvLayer.fromJson(l))
+          .toList(),
+      batchNorms: (json['batchNorms'] as List)
+          .map((b) => BatchNormLayer.fromJson(b))
+          .toList(),
+      poolSize: json['poolSize'],
+    );
+  }
 }
 
 class ConvLayer {
-  late List<List<List<List<double>>>> filters; // [numFilters][inputChannels][kH][kW]
-  late List<double> biases;
-  int kernelSize;
-  int padding; // Новый параметр
+  final List<List<List<List<double>>>> filters;
+  final List<double> biases;
+  final int kernelSize;
+  final int padding;
 
-  ConvLayer(int inputChannels, int numFilters, {this.kernelSize = 3, this.padding = 0}) {
-    double stddev = sqrt(2.0 / (inputChannels * kernelSize * kernelSize));
+  ConvLayer({
+    required this.filters,
+    required this.biases,
+    required this.kernelSize,
+    required this.padding,
+  });
 
-    // Инициализация фильтров с учётом inputChannels
-    filters = List.generate(
+  factory ConvLayer.create(int inputChannels, int numFilters, {int kernelSize = 3, int padding = 0}) {
+    final stddev = sqrt(2.0 / (inputChannels * kernelSize * kernelSize));
+
+    final filters = List.generate(
       numFilters,
           (f) => List.generate(
-        inputChannels, // Каждый фильтр имеет inputChannels каналов
+        inputChannels,
             (c) => List.generate(
           kernelSize,
               (i) => List.generate(
             kernelSize,
-                (j) => GaussianRandom().nextGaussian() * stddev, // Веса от -1 до 1
+                (j) => GaussianRandom().nextGaussian() * stddev,
           ),
         ),
       ),
     );
-    biases = List.filled(numFilters, 0.0);
+
+    return ConvLayer(
+      filters: filters,
+      biases: List.filled(numFilters, 0.0),
+      kernelSize: kernelSize,
+      padding: padding,
+    );
   }
 
   List<List<List<double>>> forward(List<List<List<double>>> input) {
     // Проверка совпадения количества каналов
     assert(input.length == filters[0].length,
-    'Input channels (${input.length}) != filter channels (${filters[0].length})');
+        'Input channels (${input.length}) != filter channels (${filters[0].length})');
 
     List<List<List<double>>> paddedInput = _addPadding(input);
 
     int outputHeight = paddedInput[0].length - kernelSize + 1;
     int outputWidth = paddedInput[0][0].length - kernelSize + 1;
-    assert(outputHeight > 0 && outputWidth > 0,
-    'Некорректные размеры после свертки: ${outputHeight}x$outputWidth');
-
+    assert(outputHeight > 0 && outputWidth > 0, 'Некорректные размеры после свертки: ${outputHeight}x$outputWidth');
 
     List<List<List<double>>> output = List.generate(
       filters.length,
-          (f) => List.generate(
+      (f) => List.generate(
         outputHeight,
-            (i) => List.filled(outputWidth, 0.0),
+        (i) => List.filled(outputWidth, 0.0),
       ),
     );
 
@@ -89,7 +124,8 @@ class ConvLayer {
           double sum = 0.0;
 
           // Суммирование по всем каналам и ядрам фильтра
-          for (int c = 0; c < paddedInput.length; c++) { // inputChannels
+          for (int c = 0; c < paddedInput.length; c++) {
+            // inputChannels
             for (int di = 0; di < kernelSize; di++) {
               for (int dj = 0; dj < kernelSize; dj++) {
                 sum += paddedInput[c][i + di][j + dj] * filters[f][c][di][dj];
@@ -130,5 +166,33 @@ class ConvLayer {
       }
       return paddedChannel;
     }).toList();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'filters': filters,
+      'biases': biases,
+      'kernelSize': kernelSize,
+      'padding': padding,
+    };
+  }
+
+  factory ConvLayer.fromJson(Map<String, dynamic> json) {
+    return ConvLayer(
+      filters: (json['filters'] as List)
+          .map((f) => (f as List)
+          .map((c) => (c as List)
+          .map((r) => (r as List)
+          .map((v) => (v as num).toDouble())
+          .toList())
+          .toList())
+          .toList())
+          .toList(),
+      biases: (json['biases'] as List)
+          .map((v) => (v as num).toDouble())
+          .toList(),
+      kernelSize: json['kernelSize'] as int,
+      padding: json['padding'] as int,
+    );
   }
 }

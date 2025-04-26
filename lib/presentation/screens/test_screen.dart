@@ -56,7 +56,7 @@ class TestScreen extends StatelessWidget {
             name: sample.name,
             image: Image.memory(sample.image).image,
             expectedResult: null,
-            result: sample.predictedCoefficient.toString(),
+            result: sample.predictedCoefficient,
             error: null,
           );
         },

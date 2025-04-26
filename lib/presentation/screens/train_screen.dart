@@ -1,6 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:diplom/application/app_bloc.dart';
 import 'package:diplom/domain/training.dart';
+import 'package:diplom/presentation/entities/failure.dart';
+import 'package:diplom/presentation/functions/file_picker.dart';
 import 'package:diplom/presentation/functions/show_success_dialog.dart';
 import 'package:diplom/presentation/functions/show_train_config_dialog.dart';
 import 'package:diplom/presentation/functions/start_training.dart';
@@ -29,26 +31,14 @@ class TrainScreen extends StatelessWidget {
                 c.trainingData.firstWhereOrNull((e) => e.id == id)) &&
             c.trainingData.firstWhereOrNull((e) => e.id == id) != null,
         builder: (context, state) {
-          try {
-            final sample = state.trainingData.firstWhere((e) => e.id == id);
-            return TrainUnit(
-              name: sample.name,
-              image: Image.memory(sample.image).image,
-              expectedResult: sample.trueCoefficient.toString(),
-              result: sample.predictedCoefficient.toString(),
-              error: sample.error.toString(),
-            );
-          } catch (e) {
-            final sample = state.trainingData.firstWhere((e) => e.id == id);
-            return TrainUnit(
-              name: sample.name,
-              image: Image.memory(sample.image).image,
-              expectedResult: sample.trueCoefficient.toString(),
-              result: sample.predictedCoefficient.toString(),
-              error: sample.error.toString(),
-            );
-          }
-
+          final sample = state.trainingData.firstWhere((e) => e.id == id);
+          return TrainUnit(
+            name: sample.name,
+            image: Image.memory(sample.image).image,
+            expectedResult: sample.trueCoefficient,
+            result: sample.predictedCoefficient,
+            error: sample.error,
+          );
         },
       );
     });
@@ -56,20 +46,26 @@ class TrainScreen extends StatelessWidget {
 
   Widget get _floatingActionButton {
     return BlocBuilder<AppBloc, AppState>(
-      buildWhen: (p, c) => p.isTraining != c.isTraining,
+      buildWhen: (p, c) => p.isTraining != c.isTraining || p.trainingData != c.trainingData,
       builder: (context, state) {
         final bloc = context.read<AppBloc>();
         return FloatingActionButton.extended(
-          onPressed: () async {
-            if (state.isTraining) {
-              bloc.add(const AppEvent.stopTraining());
-            } else {
-              final start = await showTrainConfigDialog(context);
-              if (start != null) {
-                startTraining(bloc, start);
-              }
-            }
-          },
+          onPressed: !state.isTraining && state.trainingData.isNotEmpty
+              ? () async {
+                  if (state.isTraining) {
+                    bloc.add(const AppEvent.stopTraining());
+                  } else {
+                    final start = await showTrainConfigDialog(context);
+                    if (start != null) {
+                      startTraining(bloc, start);
+                    }
+                  }
+                }
+              : () async {
+                  bloc.add(const AppEvent.failure(
+                    failure: Failure('Нельзя начать тренировку без тренировочных экземпляров'),
+                  ));
+                },
           label: state.isTraining ? const Text("Остановить тренировку") : const Text("Начать тренировку"),
           icon: state.isTraining ? const Icon(Icons.stop) : const Icon(Icons.play_arrow),
         );
@@ -88,13 +84,25 @@ class TrainScreen extends StatelessWidget {
     );
   }
 
+  Widget _uploadNet(BuildContext context) {
+    return IconButton(
+      onPressed: () async {
+        final bloc = context.read<AppBloc>();
+        final net = await loadModelFromFile(bloc);
+        bloc.add(AppEvent.resetCNN(net: net));
+      },
+      tooltip: "Загрузить модель",
+      icon: const Icon(Icons.add_box_outlined),
+    );
+  }
+
   Widget _resetNet(BuildContext context) {
     return IconButton(
       onPressed: () async {
         final bloc = context.read<AppBloc>();
         bloc.add(const AppEvent.resetCNN());
       },
-      tooltip: "Сбросить",
+      tooltip: "Сбросить модель",
       icon: const Icon(Icons.restart_alt),
     );
   }
@@ -145,6 +153,7 @@ class TrainScreen extends StatelessWidget {
           backgroundColor: Colors.black12,
           actions: [
             _pickFilesButton(context),
+            _uploadNet(context),
             _resetNet(context),
           ],
         ),

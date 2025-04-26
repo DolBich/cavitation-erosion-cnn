@@ -2,10 +2,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dartz/dartz.dart';
+import 'package:diplom/application/app_bloc.dart';
+import 'package:diplom/cnn/erosion_net.dart';
 import 'package:diplom/domain/testing.dart';
 import 'package:diplom/domain/training.dart';
 import 'package:diplom/presentation/entities/failure.dart';
 import 'package:excel/excel.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:filepicker_windows/filepicker_windows.dart';
 
 Future<Either<Failure, List<TrainingSample>>?> pickTrainFiles() async {
@@ -115,4 +118,27 @@ Future<Either<Failure, List<TestingSample>>?> pickTestFiles() async {
   }
 
   return right(data);
+}
+
+Future<ErosionNet?> loadModelFromFile(AppBloc bloc) async {
+  try {
+    // 1. Выбор файла через системный диалог
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+      allowMultiple: false,
+    );
+
+    if (result == null || result.files.isEmpty) return null;
+
+    // 2. Чтение содержимого файла
+    String filePath = result.files.single.path!;
+
+
+    // 4. Создание модели из JSON
+    return ErosionNet.loadFromFile(filePath);
+  } catch (e) {
+    bloc.add(AppEvent.failure(failure: Failure('Не получилось загрузить файл: $e')));
+    return null;
+  }
 }
