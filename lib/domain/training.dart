@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:diplom/presentation/entities/config_modes.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:uuid/v1.dart';
 import 'package:uuid/v4.dart';
 
 class TrainingSample with EquatableMixin {
@@ -20,6 +22,7 @@ class TrainingSample with EquatableMixin {
     double? error,
   }) {
     return TrainingSample(
+      id: id,
       image: image ?? this.image,
       name: name ?? this.name,
       trueCoefficient: trueCoefficient ?? this.trueCoefficient,
@@ -29,15 +32,17 @@ class TrainingSample with EquatableMixin {
   }
 
   TrainingSample({
+    UuidV4? id,
     required this.image,
     required this.name,
     required this.trueCoefficient,
     this.predictedCoefficient = 0.0,
     this.error = 0.0,
-  }) : id = const UuidV4();
+  }) : id = id ?? UuidV4();
 
   @override
   List<Object?> get props => [
+        id,
         image,
         name,
         trueCoefficient,

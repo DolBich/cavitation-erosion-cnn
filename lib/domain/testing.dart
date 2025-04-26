@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
+import 'package:uuid/v4.dart';
 
 class TestingSample with EquatableMixin{
+  final UuidV4 id;
   final Uint8List image;
   final String name;
   final double predictedCoefficient;
@@ -21,11 +23,11 @@ class TestingSample with EquatableMixin{
     );
   }
 
-  const TestingSample({
+  TestingSample({
     required this.image,
     required this.name,
     this.predictedCoefficient = 0.0,
-  });
+  }) : id = UuidV4();
 
   @override
   List<Object?> get props => [

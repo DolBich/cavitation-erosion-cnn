@@ -1,9 +1,11 @@
 import 'dart:math';
 
+import 'package:diplom/cnn/norm_layer.dart';
 import 'package:diplom/cnn/process.dart';
 
 class ConvBlock {
   late List<ConvLayer> convLayers;
+  late List<BatchNormLayer> batchNorms;
   int inChannels;
   int outChannels;
   int kernelSize;
@@ -15,15 +17,20 @@ class ConvBlock {
       ConvLayer(inChannels, outChannels, kernelSize: kernelSize, padding: padding),
       ConvLayer(outChannels, outChannels, kernelSize: kernelSize, padding: padding)
     ];
+    batchNorms = [
+      BatchNormLayer(outChannels),
+      BatchNormLayer(outChannels),
+    ];
   }
 
   List<List<List<double>>> forward(List<List<List<double>>> input) {
     var x = input;
-    for (var conv in convLayers) {
-      x = conv.forward(x);
+    for (int i = 0; i < convLayers.length; i++) {
+      x = convLayers[i].forward(x);
+      x = batchNorms[i].forward(x); // Добавляем BatchNorm
       x = relu(x);
     }
-    return maxPool(x, 2);  // Уменьшение размера в 2 раза
+    return maxPool(x, poolSize);
   }
 }
 
@@ -34,6 +41,8 @@ class ConvLayer {
   int padding; // Новый параметр
 
   ConvLayer(int inputChannels, int numFilters, {this.kernelSize = 3, this.padding = 0}) {
+    double stddev = sqrt(2.0 / (inputChannels * kernelSize * kernelSize));
+
     // Инициализация фильтров с учётом inputChannels
     filters = List.generate(
       numFilters,
@@ -43,7 +52,7 @@ class ConvLayer {
           kernelSize,
               (i) => List.generate(
             kernelSize,
-                (j) => Random().nextDouble() * 2 - 1, // Веса от -1 до 1
+                (j) => GaussianRandom().nextGaussian() * stddev, // Веса от -1 до 1
           ),
         ),
       ),
@@ -53,15 +62,15 @@ class ConvLayer {
 
   List<List<List<double>>> forward(List<List<List<double>>> input) {
     // Проверка совпадения количества каналов
-    // assert(input.length == filters[0].length,
-    // 'Input channels (${input.length}) != filter channels (${filters[0].length})');
+    assert(input.length == filters[0].length,
+    'Input channels (${input.length}) != filter channels (${filters[0].length})');
 
     List<List<List<double>>> paddedInput = _addPadding(input);
 
     int outputHeight = paddedInput[0].length - kernelSize + 1;
     int outputWidth = paddedInput[0][0].length - kernelSize + 1;
-    // assert(outputHeight > 0 && outputWidth > 0,
-    // 'Некорректные размеры после свертки: ${outputHeight}x$outputWidth');
+    assert(outputHeight > 0 && outputWidth > 0,
+    'Некорректные размеры после свертки: ${outputHeight}x$outputWidth');
 
 
     List<List<List<double>>> output = List.generate(

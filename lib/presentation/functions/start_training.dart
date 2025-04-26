@@ -52,7 +52,9 @@ void startTraining(AppBloc bloc, TrainingConfig config) async {
       var gradients = calculateGradients(model, error);
       updateWeights(model, gradients, 0.0001);
 
-      await Future.delayed(const Duration(milliseconds: 10)); // Для обновления UI
+      print('Epoch ${epoch + 1}: ${sample.name} = $prediction|${(error/sample.trueCoefficient) * 100}');
+      if(!isTraining) break;
+      await Future.delayed(const Duration(milliseconds: 100)); // Для обновления UI
     }
 
     bloc.add(const AppEvent.epochDone());

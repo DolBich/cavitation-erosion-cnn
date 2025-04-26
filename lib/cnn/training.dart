@@ -57,6 +57,22 @@ List<List<List<double>>> calculateGradients(ErosionNet net, double error) {
 }
 
 void updateWeights(ErosionNet net, List<List<List<double>>> gradients, double lr) {
+  for (var layerGrads in gradients) {
+    for (var filterGrads in layerGrads) {
+      for (int i = 0; i < filterGrads.length; i++) {
+        filterGrads[i] = filterGrads[i].clamp(-1.0, 1.0);
+      }
+    }
+  }
+
+  for (var layerGrads in gradients) {
+    for (var filterGrads in layerGrads) {
+      for (int i = 0; i < filterGrads.length; i++) {
+        filterGrads[i] = filterGrads[i].clamp(-1.0, 1.0);
+      }
+    }
+  }
+
   // Обновление последнего DenseLayer
   DenseLayer lastLayer = net.denseLayers.last;
 

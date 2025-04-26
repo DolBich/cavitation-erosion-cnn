@@ -5,7 +5,9 @@ import 'package:diplom/domain/training.dart';
 import 'package:diplom/presentation/entities/failure.dart';
 import 'package:diplom/presentation/functions/file_picker.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uuid/v1.dart';
 import 'package:uuid/v4.dart';
 
 part 'app_event.dart';
@@ -24,7 +26,14 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     on<_TrainingStarted>(_trainStarted);
     on<_UpdateSample>(_updateSample);
     on<_EpochDone>(_epochDone);
+    on<_FailureInTest>(_failureInTest);
     add(const AppEvent.resetCNN());
+  }
+
+  Future _failureInTest(_FailureInTest event, Emitter<AppState> emit) async {
+    emit(state.copyWith(
+      failureOrSuccessOption: left(event.withFailure),
+    ));
   }
 
   Future _epochDone(_EpochDone event, Emitter<AppState> emit) async {

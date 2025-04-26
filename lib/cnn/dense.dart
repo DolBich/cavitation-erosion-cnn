@@ -23,8 +23,8 @@ class DenseLayer {
   }
 
   List<double> forward(List<double> input) {
-    // assert(input.length == inputSize,
-    // 'Неверный размер входа: ${input.length} != $inputSize');
+    assert(input.length == inputSize,
+    'Неверный размер входа: ${input.length} != $inputSize');
 
     lastInput = List.from(input);
     List<double> output = List.filled(outputSize, 0.0);

@@ -22,10 +22,19 @@ sealed class AppEvent {
   const factory AppEvent.updateSample({
     required UuidV4 id,
     required double predictedCoefficient,
-    required double error,
+    double? error,
   }) = _UpdateSample;
 
   const factory AppEvent.epochDone() = _EpochDone;
+
+  const factory AppEvent.failureInTest({required Failure withFailure}) = _FailureInTest;
+
+}
+
+class _FailureInTest extends AppEvent {
+  final Failure withFailure;
+
+  const _FailureInTest({required this.withFailure});
 }
 
 class _EpochDone extends AppEvent {
@@ -35,12 +44,12 @@ class _EpochDone extends AppEvent {
 class _UpdateSample extends AppEvent {
   final UuidV4 id;
   final double predictedCoefficient;
-  final double error;
+  final double? error;
 
   const _UpdateSample({
     required this.id,
     required this.predictedCoefficient,
-    required this.error,
+    this.error,
   });
 }
 

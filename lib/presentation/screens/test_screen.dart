@@ -1,5 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:diplom/application/app_bloc.dart';
 import 'package:diplom/domain/testing.dart';
+import 'package:diplom/presentation/functions/predict_test_samples.dart';
 import 'package:diplom/presentation/widgets/train_unit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -43,36 +45,43 @@ class TestScreen extends StatelessWidget {
 
   List<Widget> _samples(List<TestingSample> data) {
     return List.generate(data.length, (i) {
-      final sample = data[i];
-      return TrainUnit(
-          name: sample.name,
-          image: Image.memory(sample.image).image,
-          expectedResult: null,
-          result: sample.predictedCoefficient.toString(),
-          error: null,);
+      final id = data[i].id;
+      return BlocBuilder<AppBloc, AppState>(
+        buildWhen: (p, c) =>
+            (p.testData.firstWhereOrNull((e) => e.id == id) != c.testData.firstWhereOrNull((e) => e.id == id)) &&
+            c.testData.firstWhereOrNull((e) => e.id == id) != null,
+        builder: (context, state) {
+          final sample = state.testData.firstWhere((e) => e.id == id);
+          return TrainUnit(
+            name: sample.name,
+            image: Image.memory(sample.image).image,
+            expectedResult: null,
+            result: sample.predictedCoefficient.toString(),
+            error: null,
+          );
+        },
+      );
     });
   }
 
   Widget _samplesList(BuildContext context) {
     return BlocBuilder<AppBloc, AppState>(
-      buildWhen: (p, c) => p.testData != c.testData,
+      buildWhen: (p, c) => p.testData.length != c.testData.length,
       builder: (context, state) {
         final data = state.testData;
         return ListView(
           itemExtent: 400,
-          children: data.isNotEmpty
-              ? _samples(data)
-              : [_pickFilesText],
+          children: data.isNotEmpty ? _samples(data) : [_pickFilesText],
         );
       },
     );
   }
 
   Widget _floatingActionButton(BuildContext context) {
-    // final bloc = context.read<AppBloc>();
     return FloatingActionButton.extended(
       onPressed: () {
-
+        final bloc = context.read<AppBloc>();
+        predictTestSamples(bloc, bloc.state.testData);
       },
       label: const Text("Тестирование"),
       icon: const Icon(Icons.play_arrow),

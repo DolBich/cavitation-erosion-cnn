@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:diplom/application/app_bloc.dart';
 import 'package:diplom/domain/training.dart';
 import 'package:diplom/presentation/functions/show_success_dialog.dart';
@@ -21,13 +22,34 @@ class TrainScreen extends StatelessWidget {
 
   List<Widget> _samples(List<TrainingSample> data) {
     return List.generate(data.length, (i) {
-      final sample = data[i];
-      return TrainUnit(
-        name: sample.name,
-        image: Image.memory(sample.image).image,
-        expectedResult: sample.trueCoefficient.toString(),
-        result: sample.predictedCoefficient.toString(),
-        error: sample.error.toString(),
+      final id = data[i].id;
+      return BlocBuilder<AppBloc, AppState>(
+        buildWhen: (p, c) =>
+            (p.trainingData.firstWhereOrNull((e) => e.id == id) !=
+                c.trainingData.firstWhereOrNull((e) => e.id == id)) &&
+            c.trainingData.firstWhereOrNull((e) => e.id == id) != null,
+        builder: (context, state) {
+          try {
+            final sample = state.trainingData.firstWhere((e) => e.id == id);
+            return TrainUnit(
+              name: sample.name,
+              image: Image.memory(sample.image).image,
+              expectedResult: sample.trueCoefficient.toString(),
+              result: sample.predictedCoefficient.toString(),
+              error: sample.error.toString(),
+            );
+          } catch (e) {
+            final sample = state.trainingData.firstWhere((e) => e.id == id);
+            return TrainUnit(
+              name: sample.name,
+              image: Image.memory(sample.image).image,
+              expectedResult: sample.trueCoefficient.toString(),
+              result: sample.predictedCoefficient.toString(),
+              error: sample.error.toString(),
+            );
+          }
+
+        },
       );
     });
   }
@@ -43,7 +65,7 @@ class TrainScreen extends StatelessWidget {
               bloc.add(const AppEvent.stopTraining());
             } else {
               final start = await showTrainConfigDialog(context);
-              if(start != null) {
+              if (start != null) {
                 startTraining(bloc, start);
               }
             }
@@ -95,7 +117,7 @@ class TrainScreen extends StatelessWidget {
 
   Widget _samplesList(BuildContext context) {
     return BlocBuilder<AppBloc, AppState>(
-      buildWhen: (p, c) => p.trainingData != c.trainingData,
+      buildWhen: (p, c) => p.trainingData.length != c.trainingData.length,
       builder: (context, state) {
         final data = state.trainingData;
         return SizedBox(

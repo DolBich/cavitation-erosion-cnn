@@ -63,7 +63,8 @@ Future<Either<Failure, List<TrainingSample>>?> pickTrainFiles() async {
     if (name == null || value == null) continue;
     final Uint8List imageBytes;
     try {
-      imageBytes = await newFiles.firstWhere((e) => e.uri.toString().endsWith("$name.png")).readAsBytes();
+      final image = newFiles.firstWhere((e) => e.path.split('\\').last == "$name.png");
+      imageBytes = await image.readAsBytes();
     } catch (_) {
       continue;
     }
