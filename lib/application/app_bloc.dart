@@ -12,7 +12,7 @@ part 'app_event.dart';
 part 'app_state.dart';
 
 class AppBloc extends Bloc<AppEvent, AppState> {
-  AppBloc(ErosionNet initialNet) : super(AppState.initial(initialNet)) {
+  AppBloc(ErosionNet? initialNet) : super(AppState.initial(initialNet)) {
     on<_PickTrainData>(_pickTrainData);
     on<_PickTestData>(_pickTestData);
     on<_StopTraining>(_stopTraining);
@@ -24,7 +24,6 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     on<_EpochDone>(_epochDone);
     on<_Failure>(_failureInTest);
     on<_UpdateTotalError>(_updateTotalError);
-    add(const AppEvent.resetCNN());
   }
 
   Future _updateTotalError(_UpdateTotalError event, Emitter<AppState> emit) async {
@@ -128,8 +127,9 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   }
 
   Future _resetCNN(_ResetCNN event, Emitter<AppState> emit) async {
+    final cnn = event.net ?? ErosionNet();
     emit(state.copyWith(
-      cnn: event.net ?? ErosionNet(),
+      cnn: cnn,
     ));
   }
 }

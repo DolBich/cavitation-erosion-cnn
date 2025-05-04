@@ -48,8 +48,7 @@ class TestScreen extends StatelessWidget {
       final id = data[i].id;
       return BlocBuilder<AppBloc, AppState>(
         buildWhen: (p, c) =>
-            (p.testData.firstWhereOrNull((e) => e.id == id) != c.testData.firstWhereOrNull((e) => e.id == id)) &&
-            c.testData.firstWhereOrNull((e) => e.id == id) != null,
+            (p.testData.firstWhereOrNull((e) => e.id == id) != c.testData.firstWhereOrNull((e) => e.id == id)),
         builder: (context, state) {
           final sample = state.testData.firstWhere((e) => e.id == id);
           return TrainUnit(
@@ -66,7 +65,7 @@ class TestScreen extends StatelessWidget {
 
   Widget _samplesList(BuildContext context) {
     return BlocBuilder<AppBloc, AppState>(
-      buildWhen: (p, c) => p.testData.length != c.testData.length,
+      buildWhen: (p, c) => p.testData != c.testData,
       builder: (context, state) {
         final data = state.testData;
         return ListView(

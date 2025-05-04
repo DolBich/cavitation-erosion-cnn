@@ -22,31 +22,6 @@ class TrainScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _samples(List<TrainingSample> data) {
-    return List.generate(data.length, (i) {
-      final id = data[i].id;
-      return BlocBuilder<AppBloc, AppState>(
-        buildWhen: (p, c) =>
-            (p.trainingData.firstWhereOrNull((e) => e.id == id) !=
-                c.trainingData.firstWhereOrNull((e) => e.id == id)) &&
-            c.trainingData.firstWhereOrNull((e) => e.id == id) != null,
-        builder: (context, state) {
-          final sample = state.trainingData.firstWhereOrNull((e) => e.id == id);
-          if(sample == null) {
-            return const SizedBox();
-          }
-          return TrainUnit(
-            name: sample.name,
-            image: Image.memory(sample.image).image,
-            expectedResult: sample.trueCoefficient,
-            result: sample.predictedCoefficient,
-            error: sample.error,
-          );
-        },
-      );
-    });
-  }
-
   Widget get _floatingActionButton {
     return BlocBuilder<AppBloc, AppState>(
       buildWhen: (p, c) => p.isTraining != c.isTraining || p.trainingData != c.trainingData,
@@ -142,6 +117,30 @@ class TrainScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  List<Widget> _samples(List<TrainingSample> data) {
+    return List.generate(data.length, (i) {
+      final id = data[i].id;
+      return BlocBuilder<AppBloc, AppState>(
+        buildWhen: (p, c) =>
+        (p.trainingData.firstWhereOrNull((e) => e.id == id) !=
+            c.trainingData.firstWhereOrNull((e) => e.id == id)),
+        builder: (context, state) {
+          final sample = state.trainingData.firstWhereOrNull((e) => e.id == id);
+          if(sample == null) {
+            return const SizedBox();
+          }
+          return TrainUnit(
+            name: sample.name,
+            image: Image.memory(sample.image).image,
+            expectedResult: sample.trueCoefficient,
+            result: sample.predictedCoefficient,
+            error: sample.error,
+          );
+        },
+      );
+    });
   }
 
   @override

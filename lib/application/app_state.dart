@@ -21,7 +21,7 @@ class AppState with EquatableMixin {
     required this.totalError,
   });
 
-  factory AppState.initial(ErosionNet initialNet) {
+  factory AppState.initial(ErosionNet? initialNet) {
     return AppState(
       iteration: 0,
       isTraining: false,
@@ -29,7 +29,7 @@ class AppState with EquatableMixin {
       trainingData: [],
       testData: [],
       failureOrSuccessOption: null,
-      cnn: initialNet,
+      cnn: initialNet ?? ErosionNet(),
       totalError: double.maxFinite,
     );
   }

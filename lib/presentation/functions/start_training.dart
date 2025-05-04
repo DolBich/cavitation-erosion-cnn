@@ -4,6 +4,7 @@ import 'package:diplom/application/app_bloc.dart';
 import 'package:diplom/cnn/erosion_net.dart';
 import 'package:diplom/cnn/training.dart';
 import 'package:diplom/domain/training.dart';
+import 'package:diplom/main.dart';
 import 'package:diplom/presentation/entities/config_modes.dart';
 import 'package:diplom/presentation/entities/failure.dart';
 import 'package:image/image.dart';
@@ -94,7 +95,7 @@ void startTraining(AppBloc bloc, TrainingConfig config) async {
 
         // 5. Обратное распространение
         var gradients = calculateGradients(model, error);
-        updateWeights(model, gradients, 0.0001);
+        updateWeights(model, gradients, TRAIN_SPEED);
 
         print('Epoch ${epoch + 1}: ${sample.name} = $prediction|${(error/sample.trueCoefficient) * 100}');
         if(!isTraining) break;
@@ -108,6 +109,6 @@ void startTraining(AppBloc bloc, TrainingConfig config) async {
   }
 
 
-  ErosionNet.saveToFile(model, ' model.json');
+  ErosionNet.saveToFile(model, DEFAULT_FILE_NAME);
   bloc.add(const AppEvent.trainingEnded());
 }

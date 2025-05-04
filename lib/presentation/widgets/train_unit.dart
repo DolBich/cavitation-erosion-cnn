@@ -33,7 +33,7 @@ class TrainUnit extends StatelessWidget {
       titles.add("Ошибка");
     }
     if(error != null && expectedResult != null) {
-      results.add(((error / expectedResult)*100).toString());
+      results.add(((error / expectedResult).abs()*100).toString());
       titles.add("Относительная ошибка, %");
     }
 

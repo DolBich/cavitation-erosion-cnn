@@ -70,8 +70,13 @@ class ErosionNet {
   }
 
   // Загрузка из файла
-  static Future<ErosionNet> loadFromFile(String path) async {
-    final jsonStr = await File(path).readAsString();
-    return ErosionNet.fromJson(jsonDecode(jsonStr));
+  static Future<ErosionNet?> loadFromFile(String path) async {
+    try{
+      final dir = Directory.current;
+      final jsonStr = await File('${dir.path}\\$path').readAsString();
+      return ErosionNet.fromJson(jsonDecode(jsonStr));
+    } catch (e) {
+      return null;
+    }
   }
 }
