@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:image/image.dart';
 
 
@@ -16,8 +17,12 @@ List<List<List<double>>> preprocess(Image image) {
   // 4. Ресайз до 128x128
   List<List<double>> resizedImage = resizeNearestNeighbor(grayImage, 128, 128);
 
-  // 5. Добавление "канала" (преобразование в 3D тензор [1][H][W])
-  return [resizedImage];
+  final tensor = [resizedImage];
+  double mean = tensor[0].expand((row) => row).average;
+  double std = sqrt(tensor[0].expand((row) => row.map((v) => pow(v - mean, 2))).average);
+  return [
+    tensor[0].map((row) => row.map((v) => (v - mean) / (std + 1e-6)).toList()).toList()
+  ];
 }
 
 List<List<List<double>>> convertToHSV(Image image) {
@@ -105,7 +110,7 @@ List<List<List<double>>> filterHighlights(List<List<List<double>>> hsvImage) {
       double v = hsvImage[y][x][2];
 
       // Если яркость > 90% и насыщенность < 10% → засвет
-      if (v > 0.9 && s < 0.1) {
+      if (v > 0.95 && s < 0.05) { /// Todo: поиграться с засветами, попытаться их убрать на картинках
         hsvImage[y][x] = [0.0, 0.0, 0.0]; // Зануляем пиксель
       }
     }

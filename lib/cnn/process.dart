@@ -1,9 +1,23 @@
 import 'dart:math';
 
-List<List<List<double>>> relu(List<List<List<double>>> x) {
-  return x.map((channel) => channel.map((row) =>
-      row.map((val) => val > 0 ? val : 0.0).toList()
-  ).toList()).toList();
+List<List<List<double>>> leakyRelu(List<List<List<double>>> x, {double alpha = 0.01}) {
+  return x.map((channel) => channel.map((row) => row.map(
+          (v) => v > 0 ? v : alpha * v
+  ).toList()).toList()).toList();
+}
+
+List<List<List<double>>> reluBackward(
+    List<List<List<double>>> gradOutput,
+    List<List<List<double>>> preReluInput,
+    ) {
+  return List.generate(preReluInput.length, (c) {
+    return List.generate(preReluInput[c].length, (h) {
+      return List.generate(preReluInput[c][h].length, (w) {
+        // Градиент проходит только там, где вход был > 0
+        return preReluInput[c][h][w] > 0 ? gradOutput[c][h][w] : 0.0;
+      });
+    });
+  });
 }
 
 List<List<List<double>>> maxPool(List<List<List<double>>> input, int poolSize) {
@@ -56,4 +70,9 @@ class GaussianRandom {
 
 double sigmoid(double x) {
   return 1.0 / (1.0 + exp(-x));
+}
+
+double sigmoidDerivative(double x) {
+  final s = sigmoid(x);
+  return s * (1 - s);
 }

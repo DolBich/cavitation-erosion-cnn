@@ -4,91 +4,62 @@ import 'package:diplom/cnn/dense.dart';
 import 'package:diplom/cnn/erosion_net.dart';
 import 'package:image/image.dart';
 
-void train(List<Image> images, List<double> labels) {
-  var net = ErosionNet();
-  double lr = 0.001;
+class MSELossWithPenalty {
+  double forward(double prediction, double target) {
+    final mse = pow(prediction - target, 2);
+    final penalty = _calculatePenalty(prediction);
+    return mse + penalty;
+  }
 
-  for (int epoch = 0; epoch < 100; epoch++) {
-    double totalLoss = 0;
+  double backward(double prediction, double target) {
+    final gradMSE = 2 * (prediction - target);
+    final gradPenalty = _penaltyDerivative(prediction);
+    return gradMSE + gradPenalty;
+  }
 
-    for (int i = 0; i < images.length; i++) {
-      // Прямой проход
-      double prediction = net.forward(images[i]);
-      double error = prediction - labels[i];
+  double _calculatePenalty(double x) {
+    // Штрафуем значения вне диапазона
+    if (x < 0) return pow(x, 2) * 10;
+    if (x > 100) return pow(x - 100, 2) * 10;
+    return 0.0;
+  }
 
-      // Обратное распространение (упрощённо)
-      var gradients = calculateGradients(net, error);
-      updateWeights(net, gradients, lr);
-
-      totalLoss += pow(error, 2);
-    }
-
-    print('Epoch ${epoch+1}, MSE: ${totalLoss / images.length}');
+  double _penaltyDerivative(double x) {
+    if (x < 0) return 2 * x * 10;
+    if (x > 100) return 2 * (x - 100) * 10;
+    return 0.0;
   }
 }
 
-List<List<List<double>>> calculateGradients(ErosionNet net, double error) {
-  List<List<List<double>>> gradients = [];
 
-  // Градиенты для последнего DenseLayer
-  DenseLayer lastLayer = net.denseLayers.last;
-  List<List<double>> lastWeightsGrad = [];
-  List<double> lastBiasesGrad = [];
+class Trainer {
+  final ErosionNet model;
+  final double learningRate;
+  final loss = MSELossWithPenalty();
+  final int batchSize = 16;
 
-  // Вход последнего слоя (предположим, что он сохранён)
-  List<double> lastLayerInput = lastLayer.lastInput;
+  Trainer(this.model, {this.learningRate = 0.001});
 
-  for (int i = 0; i < lastLayer.weights.length; i++) {
-    List<double> neuronGrads = [];
-    for (int j = 0; j < lastLayer.weights[i].length; j++) {
-      // Градиент весов: dL/dw = error * вход нейрона
-      neuronGrads.add(error * lastLayerInput[i]);
+  void trainStep(Image image, double target) {
+    double prediction = 0;
+    try {
+      prediction = model.forward(image);
+    } catch (e, stackTrace) {
+      print('[Trainer.trainStep] Ошибка в прямом проходе: $e');
+      print(stackTrace);
+      rethrow;
     }
-    lastWeightsGrad.add(neuronGrads);
-  }
 
-  // Градиент смещений: dL/db = error
-  lastBiasesGrad = List.filled(lastLayer.biases.length, error);
-
-  gradients.add(lastWeightsGrad); // Градиенты весов
-  gradients.add([lastBiasesGrad]); // Градиенты смещений
-
-  return gradients;
-}
-
-void updateWeights(ErosionNet net, List<List<List<double>>> gradients, double lr) {
-  for (var layerGrads in gradients) {
-    for (var filterGrads in layerGrads) {
-      for (int i = 0; i < filterGrads.length; i++) {
-        filterGrads[i] = filterGrads[i].clamp(-1.0, 1.0);
-      }
+    double grad = loss.backward(prediction, target);
+    try {
+      grad = loss.backward(prediction, target);
+    } catch (e, stackTrace) {
+      print('[Trainer.trainStep] Ошибка в обратном проходе: $e');
+      print(stackTrace);
+      rethrow;
     }
-  }
 
-  for (var layerGrads in gradients) {
-    for (var filterGrads in layerGrads) {
-      for (int i = 0; i < filterGrads.length; i++) {
-        filterGrads[i] = filterGrads[i].clamp(-1.0, 1.0);
-      }
-    }
-  }
-
-  // Обновление последнего DenseLayer
-  DenseLayer lastLayer = net.denseLayers.last;
-
-  // Градиенты весов и смещений
-  List<List<double>> weightGradients = gradients[0];
-  List<double> biasGradients = gradients[1][0];
-
-  // Обновление весов
-  for (int i = 0; i < lastLayer.weights.length; i++) {
-    for (int j = 0; j < lastLayer.weights[i].length; j++) {
-      lastLayer.weights[i][j] -= lr * weightGradients[i][j];
-    }
-  }
-
-  // Обновление смещений
-  for (int j = 0; j < lastLayer.biases.length; j++) {
-    lastLayer.biases[j] -= lr * biasGradients[j];
+    final clippedGrad = grad.clamp(-1.0, 1.0);
+    model.backward(clippedGrad, learningRate);
   }
 }

@@ -9,7 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 
 const String DEFAULT_FILE_NAME = 'model.json';
-const double TRAIN_SPEED = 0.001;
+const double TRAIN_SPEED = 0.00001;
 
 void main() async {
   final initialNet = await ErosionNet.loadFromFile(DEFAULT_FILE_NAME);
