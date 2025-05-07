@@ -34,13 +34,13 @@ class ConvBlock {
     var x = input;
     for (int i = 0; i < convLayers.length; i++) {
       x = convLayers[i].forward(x);
-      print('[ConvBlock] Conv ${i+1} output range: [${_min3D(x)}, ${_max3D(x)}]');
+      // print('[ConvBlock] Conv ${i+1} output range: [${_min3D(x)}, ${_max3D(x)}]');
 
       x = batchNorms[i].forward(x);
-      print('[ConvBlock] BN ${i+1} output range: [${_min3D(x)}, ${_max3D(x)}]');
+      // print('[ConvBlock] BN ${i+1} output range: [${_min3D(x)}, ${_max3D(x)}]');
 
       x = leakyRelu(x);
-      print('[ConvBlock] ReLU ${i+1} output range: [${_min3D(x)}, ${_max3D(x)}]');
+      // print('[ConvBlock] ReLU ${i+1} output range: [${_min3D(x)}, ${_max3D(x)}]');
     }
     lastPrePoolOutput = x;
     return maxPool(x, poolSize);
@@ -307,9 +307,7 @@ class ConvLayer {
                 }
               }
 
-              // Усреднение по размеру выхода и батчу
-              final batchSize = 1; // Заменить на реальный размер батча
-              final outputSize = outputHeight * outputWidth * batchSize;
+              final outputSize = outputHeight * outputWidth;
               weightGradients[f][c][di][dj] = sum / outputSize;
 
               // Обновление весов
@@ -320,7 +318,7 @@ class ConvLayer {
       }
 
       // Логирование градиентов
-      _logGradients(weightGradients, learningRate);
+      // _logGradients(weightGradients, learningRate);
 
     } catch (e, stackTrace) {
       print('[ConvLayer.backward] Ошибка: $e');

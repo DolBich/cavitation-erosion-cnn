@@ -33,7 +33,7 @@ class ErosionNet {
 
   double forward(Image image) {
     var tensor = preprocess(image);
-    print('[ErosionNet.forward] Входные данные после препроцессинга: min=${_min3D(tensor)}, max=${_max3D(tensor)}');
+    // print('[ErosionNet.forward] Входные данные после препроцессинга: min=${_min3D(tensor)}, max=${_max3D(tensor)}');
 
     for (var block in convBlocks) {
       tensor = block.forward(tensor);

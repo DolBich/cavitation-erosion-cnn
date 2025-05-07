@@ -18,7 +18,7 @@ void startTraining(AppBloc bloc, TrainingConfig config) async {
   bool isTraining = true;
 
   final model = state.cnn;
-  model.printDebugInfo();
+  // model.printDebugInfo();
 
   final trainer = Trainer(model, learningRate: TRAIN_SPEED);
 
@@ -66,7 +66,7 @@ Future<void> _train({
   double totalLoss = 0.0;
 
   print('\n=== Epoch ${epoch+1} ===');
-  model.printDebugInfo();
+  // model.printDebugInfo();
 
   for (var sample in samples) {
     if (!isTraining) break;
@@ -100,13 +100,13 @@ Future<void> _train({
   }
 
   print('Epoch ${epoch+1} results:');
-  model.printDebugInfo();
+  // model.printDebugInfo();
   print('Loss: ${totalLoss / samples.length}');
 
-  if (epoch % 5 == 0) {
-    model.printWeightDistribution();
-    model.printActivationHistogram();
-  }
+  // if (epoch % 5 == 0) {
+  //   model.printWeightDistribution();
+  //   model.printActivationHistogram();
+  // }
 
   // print('Epoch = $epoch: ${totalLoss / samples.length}');
   // 6. Обновление статистики эпохи

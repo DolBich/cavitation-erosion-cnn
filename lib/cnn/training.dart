@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:diplom/cnn/dense.dart';
 import 'package:diplom/cnn/erosion_net.dart';
+import 'package:diplom/main.dart';
 import 'package:image/image.dart';
 
 class MSELossWithPenalty {
@@ -38,7 +38,7 @@ class Trainer {
   final loss = MSELossWithPenalty();
   final int batchSize = 16;
 
-  Trainer(this.model, {this.learningRate = 0.001});
+  Trainer(this.model, {this.learningRate = TRAIN_SPEED});
 
   void trainStep(Image image, double target) {
     double prediction = 0;

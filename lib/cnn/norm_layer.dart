@@ -21,7 +21,7 @@ class BatchNormLayer {
   });
 
   factory BatchNormLayer.create(int numChannels) {
-    print('[BatchNorm.create] Инициализация для $numChannels каналов');
+    // print('[BatchNorm.create] Инициализация для $numChannels каналов');
     return BatchNormLayer(
       gamma: List.filled(numChannels, 1.0),
       beta: List.filled(numChannels, 0.0),
@@ -31,11 +31,11 @@ class BatchNormLayer {
   }
 
   List<List<List<double>>> forward(List<List<List<double>>> x) {
-    print('[BatchNorm.forward] Channels: ${x.length}');
+    // print('[BatchNorm.forward] Channels: ${x.length}');
     lastInput = x;
 
     if (isTraining) {
-      print('[BatchNorm.forward] Режим обучения');
+      // print('[BatchNorm.forward] Режим обучения');
       batchMean = List.filled(x.length, 0.0);
       batchVar = List.filled(x.length, 0.0);
 
@@ -58,7 +58,7 @@ class BatchNormLayer {
         movingVariance[c] = 0.9 * movingVariance[c] + 0.1 * batchVar![c];
       }
     } else {
-      print('[BatchNorm.forward] Режим инференса');
+      // print('[BatchNorm.forward] Режим инференса');
     }
 
     return _normalize(x);
@@ -88,7 +88,7 @@ class BatchNormLayer {
   }
 
   List<List<List<double>>> backward(List<List<List<double>>> gradOutput, double learningRate) {
-    print('[BatchNorm.backward] Начало, lr=$learningRate');
+    // print('[BatchNorm.backward] Начало, lr=$learningRate');
     assert(isTraining && batchMean != null && lastInput != null);
 
     List<List<List<double>>> gradInput = List.generate(
@@ -103,7 +103,6 @@ class BatchNormLayer {
     List<double> gradBeta = List.filled(beta.length, 0.0);
 
     for (int c = 0; c < gradOutput.length; c++) {
-      int n = lastInput![c].length * lastInput![c][0].length;
       double stdDev = sqrt(batchVar![c] + epsilon);
 
       for (int h = 0; h < gradOutput[c].length; h++) {
@@ -126,10 +125,10 @@ class BatchNormLayer {
       }
     }
 
-    print('[BatchNorm.backward] Градиенты gamma: ${gradGamma.sublist(0, 3).map((v) => v.toStringAsFixed(4))}');
-    print('[BatchNorm.backward] Градиенты beta: ${gradBeta.sublist(0, 3).map((v) => v.toStringAsFixed(4))}');
-    print('[BatchNorm.backward] Обновленные gamma: ${gamma.sublist(0, 3).map((v) => v.toStringAsFixed(4))}');
-    print('[BatchNorm.backward] Обновленные beta: ${beta.sublist(0, 3).map((v) => v.toStringAsFixed(4))}');
+    // print('[BatchNorm.backward] Градиенты gamma: ${gradGamma.sublist(0, 3).map((v) => v.toStringAsFixed(4))}');
+    // print('[BatchNorm.backward] Градиенты beta: ${gradBeta.sublist(0, 3).map((v) => v.toStringAsFixed(4))}');
+    // print('[BatchNorm.backward] Обновленные gamma: ${gamma.sublist(0, 3).map((v) => v.toStringAsFixed(4))}');
+    // print('[BatchNorm.backward] Обновленные beta: ${beta.sublist(0, 3).map((v) => v.toStringAsFixed(4))}');
 
     return gradInput;
   }
