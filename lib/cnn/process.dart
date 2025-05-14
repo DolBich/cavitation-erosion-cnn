@@ -6,6 +6,10 @@ List<List<List<double>>> leakyRelu(List<List<List<double>>> x, {double alpha = 0
   ).toList()).toList()).toList();
 }
 
+double leakyReluOut(double x, {double alpha = 0.01}) {
+  return x > 0 ? x : alpha * x;
+}
+
 List<List<List<double>>> reluBackward(
     List<List<List<double>>> gradOutput,
     List<List<List<double>>> preReluInput,

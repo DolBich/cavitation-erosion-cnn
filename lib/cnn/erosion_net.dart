@@ -50,7 +50,7 @@ class ErosionNet {
     }
 
     lastRawOutput = List.from(vector);
-    final activated = sigmoid(vector[0]);
+    final activated = leakyReluOut(vector[0]);
     lastActivatedOutput = [activated * 100];
 
     return lastActivatedOutput![0];
