@@ -131,13 +131,15 @@ class TrainScreen extends StatelessWidget {
           if(sample == null) {
             return const SizedBox();
           }
-          return TrainUnit(
-            name: sample.name,
-            image: Image.memory(sample.image).image,
-            expectedResult: sample.trueCoefficient,
-            result: sample.predictedCoefficient,
-            error: sample.error,
-          );
+
+          return const SizedBox();
+          // return TrainUnit(
+          //   name: sample.name,
+          //   image: Image.memory(sample.image).image,
+          //   expectedResult: sample.trueCoefficient,
+          //   result: sample.predictedCoefficient,
+          //   error: sample.error,
+          // );
         },
       );
     });

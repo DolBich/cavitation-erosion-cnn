@@ -52,11 +52,8 @@ class TestScreen extends StatelessWidget {
         builder: (context, state) {
           final sample = state.testData.firstWhere((e) => e.id == id);
           return TrainUnit(
-            name: sample.name,
-            image: Image.memory(sample.image).image,
-            expectedResult: null,
-            result: sample.predictedCoefficient,
-            error: null,
+            image: Image.memory(sample.image),
+
           );
         },
       );
