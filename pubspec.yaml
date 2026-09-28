@@ -1,5 +1,5 @@
 name: diplom
-description: "A new Flutter project."
+description: "Flutter application demonstrating a custom CNN implementation and image-based training workflow."
 
 publish_to: 'none'
 
